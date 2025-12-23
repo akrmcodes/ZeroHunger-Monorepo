@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { MapPin, ShoppingBag, Soup, UtensilsCrossed } from "lucide-react";
 import Link from "next/link";
 import {
@@ -13,18 +13,10 @@ import {
     type TooltipProps,
 } from "recharts";
 
+import { StatCard } from "@/components/dashboard/shared/StatCard";
+import { containerVariants, itemVariants } from "@/components/dashboard/shared/variants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.08 } },
-};
-
-const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
-};
 
 const stats = [
     { title: "Nearby Donations", value: "8", icon: MapPin },
@@ -79,17 +71,13 @@ export function RecipientDashboard() {
             <div className="grid gap-4 sm:grid-cols-2">
                 {stats.map((stat) => (
                     <motion.div key={stat.title} variants={itemVariants}>
-                        <Card className="border-orange-100/70 bg-white/90 shadow-sm backdrop-blur">
-                            <CardHeader className="flex items-center gap-3">
-                                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-100 text-orange-700">
-                                    <stat.icon className="h-5 w-5" />
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <CardTitle className="text-sm font-semibold text-slate-600">{stat.title}</CardTitle>
-                                    <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
-                                </div>
-                            </CardHeader>
-                        </Card>
+                        <StatCard
+                            title={stat.title}
+                            value={stat.value}
+                            icon={stat.icon}
+                            iconBackground="bg-orange-100 text-orange-700"
+                            tone="orange"
+                        />
                     </motion.div>
                 ))}
             </div>

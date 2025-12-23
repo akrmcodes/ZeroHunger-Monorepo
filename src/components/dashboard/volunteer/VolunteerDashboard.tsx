@@ -1,8 +1,7 @@
 "use client";
 
-import { motion, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { CheckCircle, MapPin, Navigation, Scale, Search } from "lucide-react";
-import Link from "next/link";
 import {
     Bar,
     BarChart,
@@ -13,6 +12,9 @@ import {
     type TooltipProps,
 } from "recharts";
 
+import { ActionBanner } from "@/components/dashboard/shared/ActionBanner";
+import { StatCard } from "@/components/dashboard/shared/StatCard";
+import { containerVariants, itemVariants } from "@/components/dashboard/shared/variants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -31,16 +33,6 @@ const weeklyData = [
     { day: "Sat", deliveries: 8 },
     { day: "Sun", deliveries: 4 },
 ];
-
-const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.08 } },
-};
-
-const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
-};
 
 type StatusTooltipProps = TooltipProps<number, string> & {
     payload?: Array<{ payload?: { day?: string; deliveries?: number } }>;
@@ -73,18 +65,14 @@ export function VolunteerDashboard() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {stats.map((stat) => (
                     <motion.div key={stat.title} variants={itemVariants}>
-                        <Card className="h-full border-blue-100/70 bg-white/90 shadow-sm backdrop-blur">
-                            <CardHeader className="flex items-center gap-3">
-                                <div className={`flex h-11 w-11 items-center justify-center rounded-full ${stat.accent}`}>
-                                    <stat.icon className="h-5 w-5" />
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <CardTitle className="text-sm font-semibold text-slate-600">{stat.title}</CardTitle>
-                                    <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
-                                    <p className="text-sm text-slate-600">{stat.helper}</p>
-                                </div>
-                            </CardHeader>
-                        </Card>
+                        <StatCard
+                            title={stat.title}
+                            value={stat.value}
+                            helper={stat.helper}
+                            icon={stat.icon}
+                            iconBackground={stat.accent}
+                            tone="blue"
+                        />
                     </motion.div>
                 ))}
             </div>
@@ -151,27 +139,16 @@ export function VolunteerDashboard() {
             </div>
 
             <motion.div variants={itemVariants}>
-                <Card className="border-dashed border-2 border-blue-200 bg-blue-50/60 shadow-sm">
-                    <CardContent className="flex flex-col items-center justify-between gap-4 py-6 text-center sm:flex-row sm:text-left">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-blue-700">
-                                <Search className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <p className="text-lg font-semibold text-slate-900">Quick actions</p>
-                                <p className="text-sm text-slate-600">Find new donations or review your history.</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                            <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                                <Link href="/claims">Find Donations</Link>
-                            </Button>
-                            <Button asChild variant="outline" className="border-blue-200 text-blue-700 hover:bg-blue-50">
-                                <Link href="/claims">My History</Link>
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+                <ActionBanner
+                    title="Quick actions"
+                    description="Find new donations or review your history."
+                    icon={Search}
+                    tone="blue"
+                    actions={[
+                        { label: "Find Donations", href: "/claims" },
+                        { label: "My History", href: "/claims", variant: "outline" },
+                    ]}
+                />
             </motion.div>
         </motion.div>
     );

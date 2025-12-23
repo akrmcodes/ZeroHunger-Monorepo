@@ -390,11 +390,11 @@ src/
 - [✅] Display simplified impact stats
 
 **2.6 Shared Dashboard Components**
-- [ ] Create `ImpactScore.tsx` component with animation
-- [ ] Build `StatCard.tsx` for dashboard metrics
-- [ ] Create `QuickAction.tsx` card component
-- [ ] Build `RecentActivity.tsx` feed component
-- [ ] Add skeleton loading states for all dashboard sections
+- [✅] Create `ImpactScore.tsx` component with animation
+- [✅] Build `StatCard.tsx` for dashboard metrics
+- [✅] Create `QuickAction.tsx` card component
+- [✅] Build `RecentActivity.tsx` feed component
+- [⚠️] Add skeleton loading states for all dashboard sections
 
 ---
 

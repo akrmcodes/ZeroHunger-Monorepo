@@ -1,8 +1,7 @@
 "use client";
 
-import { motion, type Variants } from "framer-motion";
+import { motion } from "framer-motion";
 import { PlusCircle } from "lucide-react";
-import Link from "next/link";
 import {
     Pie,
     PieChart,
@@ -12,7 +11,10 @@ import {
     type TooltipProps,
 } from "recharts";
 
-import { Button } from "@/components/ui/button";
+import { ActionBanner } from "@/components/dashboard/shared/ActionBanner";
+import { ActivityList } from "@/components/dashboard/shared/ActivityList";
+import { StatCard } from "@/components/dashboard/shared/StatCard";
+import { containerVariants, itemVariants } from "@/components/dashboard/shared/variants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Stat = {
@@ -47,16 +49,6 @@ const activityItems = [
     { title: "Delivered to Community Kitchen", time: "Yesterday" },
     { title: "Donated Fresh Bread", time: "2 days ago" },
 ];
-
-const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.08 } },
-};
-
-const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 12 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } },
-};
 
 function ImpactRing() {
     const progress = 0.78; // mock 78%
@@ -109,20 +101,15 @@ export function DonorDashboard() {
                     const isImpact = stat.title === "Impact Score";
                     return (
                         <motion.div key={stat.title} variants={itemVariants}>
-                            <Card className="h-full border-emerald-100/70 bg-white/90 shadow-sm backdrop-blur">
-                                <CardHeader className="flex flex-row items-center justify-between gap-3">
-                                    <div>
-                                        <CardTitle className="text-sm font-semibold text-slate-600">{stat.title}</CardTitle>
-                                        <p className="text-3xl font-bold text-slate-900">{stat.value}</p>
-                                        <p className="text-sm text-slate-600">{stat.helper}</p>
-                                    </div>
-                                    {isImpact ? (
-                                        <ImpactRing />
-                                    ) : (
-                                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${stat.accentClass}`}>{stat.helper}</span>
-                                    )}
-                                </CardHeader>
-                            </Card>
+                            <StatCard
+                                title={stat.title}
+                                value={stat.value}
+                                helper={isImpact ? stat.helper : undefined}
+                                badgeText={!isImpact ? stat.helper : undefined}
+                                badgeClassName={!isImpact ? stat.accentClass : undefined}
+                                endAddon={isImpact ? <ImpactRing /> : undefined}
+                                tone="emerald"
+                            />
                         </motion.div>
                     );
                 })}
@@ -134,14 +121,12 @@ export function DonorDashboard() {
                         <CardHeader>
                             <CardTitle>Recent Activity</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                            {activityItems.map((activity) => (
-                                <div key={activity.title} className="flex items-center justify-between rounded-lg border border-emerald-50 bg-emerald-50/60 px-3 py-2">
-                                    <p className="text-sm font-medium text-slate-800">{activity.title}</p>
-                                    <span className="text-xs text-slate-500">{activity.time}</span>
-                                </div>
-                            ))}
-                            {activityItems.length === 0 && <p className="text-sm text-slate-500">No activity yet. Create your first donation.</p>}
+                        <CardContent>
+                            <ActivityList
+                                items={activityItems}
+                                tone="emerald"
+                                emptyMessage="No activity yet. Create your first donation."
+                            />
                         </CardContent>
                     </Card>
                 </motion.div>
@@ -183,26 +168,13 @@ export function DonorDashboard() {
             </div>
 
             <motion.div variants={itemVariants}>
-                <Card className="border-dashed border-2 border-emerald-200 bg-emerald-50/60 shadow-sm">
-                    <CardContent className="flex flex-col items-center justify-between gap-4 py-6 text-center sm:flex-row sm:text-left">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                                <PlusCircle className="h-6 w-6" />
-                            </div>
-                            <div>
-                                <p className="text-lg font-semibold text-slate-900">Donate food now</p>
-                                <p className="text-sm text-slate-600">Create a new donation and connect with volunteers instantly.</p>
-                            </div>
-                        </div>
-                        <Button
-                            asChild
-                            className="bg-emerald-600 px-5 font-semibold text-white shadow hover:bg-emerald-700"
-                            variant="default"
-                        >
-                            <Link href="/donations/create">Create Donation</Link>
-                        </Button>
-                    </CardContent>
-                </Card>
+                <ActionBanner
+                    title="Donate food now"
+                    description="Create a new donation and connect with volunteers instantly."
+                    icon={PlusCircle}
+                    tone="emerald"
+                    actions={[{ label: "Create Donation", href: "/donations/create" }]}
+                />
             </motion.div>
         </motion.div>
     );
