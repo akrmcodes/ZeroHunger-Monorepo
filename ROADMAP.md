@@ -454,13 +454,13 @@ src/
 
 **3.3 Donation Listing**
 
-- [ ] Create `app/donations/page.tsx` with DonationList
-- [ ] Build `DonationCard.tsx` component with status badge
-- [ ] Implement filtering by status (available, reserved, delivered)
-- [ ] Add sorting options (newest, expiring soon)
-- [ ] Create `StatusBadge.tsx` component with color coding
-- [ ] Implement pagination or infinite scroll
-- [ ] Add empty state for no donations
+- [✅] Create `app/donations/page.tsx` with DonationList
+- [✅] Build `DonationCard.tsx` component with status badge
+- [⚠️] Implement filtering by status (available, reserved, delivered)
+- [⚠️] Add sorting options (newest, expiring soon)
+- [✅] Create `StatusBadge.tsx` component with color coding
+- [⚠️] Implement pagination or infinite scroll
+- [✅] Add empty state for no donations
 
 **3.4 Donation Creation**
 
