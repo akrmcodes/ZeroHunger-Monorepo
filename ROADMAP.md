@@ -13,10 +13,10 @@
 2. [Phased Implementation Plan](#section-2-phased-implementation-plan)
    - [Stage 1: Project Foundation & Authentication](#stage-1-project-foundation--authentication)
    - [Stage 2: Dashboard & Role-Based Views](#stage-2-dashboard--role-based-views)
-   - [Stage 3:  Donation Management (Donor)](#stage-3-donation-management-donor)
+   - [Stage 3: Donation Management (Donor)](#stage-3-donation-management-donor)
    - [Stage 4: Claim Workflow (Volunteer)](#stage-4-claim-workflow-volunteer)
    - [Stage 5: Geolocation & Map Integration](#stage-5-geolocation--map-integration)
-   - [Stage 6:  Notifications System](#stage-6-notifications-system)
+   - [Stage 6: Notifications System](#stage-6-notifications-system)
    - [Stage 7: Profile & Settings](#stage-7-profile--settings)
    - [Stage 8: Polish, Animation & Accessibility](#stage-8-polish-animation--accessibility)
    - [Stage 9: Testing & Quality Assurance](#stage-9-testing--quality-assurance)
@@ -28,25 +28,26 @@
 
 ### 1.1 Technology Stack Summary
 
-| Layer | Technology | Version | Purpose |
-|-------|------------|---------|---------|
-| **Framework** | Next.js | 16.x (Latest Stable) | App Router, Server Components, Turbopack |
-| **Language** | TypeScript | 5.x | Type safety, IntelliSense, contract enforcement |
-| **Styling** | Tailwind CSS | v4 | Utility-first CSS, design tokens |
-| **UI Library** | Shadcn UI | Latest | Accessible, customizable components |
-| **Animation** | Framer Motion | 11.x | Page transitions, micro-interactions |
-| **State Management** | React Context + TanStack Query | v5 | Server state, caching, mutations |
-| **Forms** | React Hook Form + Zod | Latest | Validation matching API contract |
-| **Maps** | React-Leaflet | 4.x | OpenStreetMap integration |
-| **HTTP Client** | Axios | 1.x | Centralized API client with interceptors |
-| **Icons** | Lucide React | Latest | Consistent iconography |
+| Layer                | Technology                     | Version              | Purpose                                         |
+| -------------------- | ------------------------------ | -------------------- | ----------------------------------------------- |
+| **Framework**        | Next.js                        | 16.x (Latest Stable) | App Router, Server Components, Turbopack        |
+| **Language**         | TypeScript                     | 5.x                  | Type safety, IntelliSense, contract enforcement |
+| **Styling**          | Tailwind CSS                   | v4                   | Utility-first CSS, design tokens                |
+| **UI Library**       | Shadcn UI                      | Latest               | Accessible, customizable components             |
+| **Animation**        | Framer Motion                  | 11.x                 | Page transitions, micro-interactions            |
+| **State Management** | React Context + TanStack Query | v5                   | Server state, caching, mutations                |
+| **Forms**            | React Hook Form + Zod          | Latest               | Validation matching API contract                |
+| **Maps**             | React-Leaflet                  | 4.x                  | OpenStreetMap integration                       |
+| **HTTP Client**      | Axios                          | 1.x                  | Centralized API client with interceptors        |
+| **Icons**            | Lucide React                   | Latest               | Consistent iconography                          |
 
-### 1.2 Architecture Strategy:  Environment Abstraction
+### 1.2 Architecture Strategy: Environment Abstraction
 
 #### Problem Statement
-The system must support **two backends** (Laravel PHP & Java Spring Boot) with identical API endpoints but different base URLs.  The switch must happen via **environment variable only**—no code changes. 
 
-#### Solution:  Centralized API Client Pattern
+The system must support **two backends** (Laravel PHP & Java Spring Boot) with identical API endpoints but different base URLs. The switch must happen via **environment variable only**—no code changes.
+
+#### Solution: Centralized API Client Pattern
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
@@ -109,35 +110,39 @@ The system must support **two backends** (Laravel PHP & Java Spring Boot) with i
 #### Technical Implementation Details
 
 **1. Base URL Resolution**
+
 ```typescript
 // lib/api/client.ts
 const getBaseUrl = (): string => {
-  const url = process.env. NEXT_PUBLIC_API_BASE_URL;
+  const url = process.env.NEXT_PUBLIC_API_BASE_URL;
   if (!url) {
-    throw new Error('NEXT_PUBLIC_API_BASE_URL is not defined');
+    throw new Error("NEXT_PUBLIC_API_BASE_URL is not defined");
   }
-  return url. endsWith('/') ? url.slice(0, -1) : url;
+  return url.endsWith("/") ? url.slice(0, -1) : url;
 };
 ```
 
 **2. Interceptor Chain**
+
 - **Request**: Token injection, request ID generation
 - **Response Success**: Data extraction, response normalization
 - **Response Error**: Status-specific handling (401→logout, 422→validation, etc.)
 
 **3. Type Safety Enforcement**
-- All API responses wrapped in typed generics:  `Promise<ApiResponse<User>>`
+
+- All API responses wrapped in typed generics: `Promise<ApiResponse<User>>`
 - Zod schemas validate runtime data matches compile-time types
 - Strict mode TypeScript with `noUncheckedIndexedAccess`
 
 **4. Backend Detection (Optional Enhancement)**
+
 ```typescript
 // For logging/debugging which backend is active
-const getBackendType = (): 'laravel' | 'java' | 'unknown' => {
-  const url = process.env. NEXT_PUBLIC_API_BASE_URL || '';
-  if (url.includes(': 8000')) return 'laravel';
-  if (url.includes(':8080') || url.includes('java')) return 'java';
-  return 'unknown';
+const getBackendType = (): "laravel" | "java" | "unknown" => {
+  const url = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  if (url.includes(": 8000")) return "laravel";
+  if (url.includes(":8080") || url.includes("java")) return "java";
+  return "unknown";
 };
 ```
 
@@ -246,7 +251,6 @@ src/
 └── middleware. ts                 # Route protection (→ proxy. ts in Next.js 16)
 ```
 
-
 ---
 
 ## Section 2: Phased Implementation Plan
@@ -258,12 +262,14 @@ src/
 **Goal:** Set up the Next.js 16 project with TypeScript, Tailwind v4, Shadcn UI, and implement complete authentication flow with the centralized API client pattern.
 
 **Features from PROJECT-OVERVIEW.md:**
+
 - User registration with role selection (donor/volunteer/recipient)
 - Token-based authentication (Laravel Sanctum compatible)
 - Secure token storage and auto-refresh
 - Role-based route protection
 
 **Integration - Endpoints from `api.js`:**
+
 - `POST /register` → `authAPI.register(data)`
 - `POST /login` → `authAPI.login(data)`
 - `POST /logout` → `authAPI.logout()`
@@ -272,6 +278,7 @@ src/
 #### Task Checklist
 
 **1. 1 Project Initialization**
+
 - [✅] Create Next.js 16 project with TypeScript template (`npx create-next-app@latest`)
 - [✅] Configure `tsconfig.json` with strict mode and path aliases
 - [✅] Set up Tailwind CSS v4 with design tokens
@@ -282,6 +289,7 @@ src/
 - [✅] Configure `next.config.ts` for image domains and environment variables
 
 **1.2 API Client Architecture**
+
 - [✅] Create `lib/api/client.ts` with Axios instance
 - [✅] Implement base URL resolution from environment variable
 - [✅] Add request interceptor for Bearer token injection
@@ -292,19 +300,22 @@ src/
 - [✅] Export unified API from `lib/api/index. ts`
 
 **1.3 Type Definitions**
+
 - [✅] Create `types/user.ts` matching contract's User interface
 - [✅] Create `types/api.ts` for response wrappers and error types
 - [✅] Create Zod schemas for registration validation (matching field rules)
 - [✅] Create Zod schemas for login validation
 
 **1.4 Auth Provider & State Management**
+
 - [✅] Create `providers/AuthProvider.tsx` with React Context
 - [✅] Implement `useAuth` hook with login, logout, register, user state
 - [✅] Handle token persistence in localStorage with SSR safety
-- [✅] Create auth state types:  `loading`, `authenticated`, `unauthenticated`
+- [✅] Create auth state types: `loading`, `authenticated`, `unauthenticated`
 - [✅] Implement auto-logout on 401 responses
 
 **1.5 Authentication Pages**
+
 - [✅] Create `app/(auth)/layout.tsx` - auth pages layout (centered, branded)
 - [✅] Build `app/(auth)/login/page.tsx` with LoginForm component
 - [✅] Build `app/(auth)/register/page.tsx` with RegisterForm component
@@ -316,6 +327,7 @@ src/
 - [✅] Add social auth placeholders (future enhancement)
 
 **1.6 Route Protection**
+
 - [✅] Create `middleware.ts` (or `proxy.ts` for Next.js 16) for route protection
 - [✅] Define public routes: `/`, `/login`, `/register`
 - [✅] Define protected routes: `/dashboard/*`, `/donations/*`, `/claims/*`
@@ -324,6 +336,7 @@ src/
 - [✅] Create `AuthGuard` component for client-side protection
 
 **1.7 Landing Page**
+
 - [✅] Design `app/page.tsx` landing page with hero section
 - [✅] Add feature highlights from PROJECT-OVERVIEW
 - [✅] Implement CTA buttons (Get Started → Register, Login)
@@ -337,12 +350,14 @@ src/
 **Goal:** Create role-specific dashboards showing relevant information and actions for donors, volunteers, and recipients.
 
 **Features from PROJECT-OVERVIEW.md:**
+
 - Role-based dashboards
 - Impact score display (gamification)
 - Quick action cards based on role
 - Activity overview
 
 **Integration - Endpoints from `api.js`:**
+
 - `GET /me` → `authAPI.me()` (for user data + roles)
 - `GET /my-donations` → `donationAPI.myDonations()` (donor dashboard)
 - `GET /claims` → `claimAPI.list()` (volunteer dashboard)
@@ -351,6 +366,7 @@ src/
 #### Task Checklist
 
 **2.1 Dashboard Layout**
+
 - [✅] Create `app/(dashboard)/layout.tsx` with sidebar navigation
 - [✅] Build responsive `Sidebar.tsx` component with role-based menu items
 - [✅] Create `Navbar.tsx` with user menu dropdown
@@ -359,12 +375,14 @@ src/
 - [✅] Create breadcrumb navigation component
 
 **2.2 Role Detection & Routing**
+
 - [✅] Create `app/(dashboard)/page.tsx` that redirects based on role
 - [✅] Implement role-based sidebar menu filtering
 - [✅] Create role constants in `lib/constants/roles. ts`
 - [✅] Build `useUserRole` hook for role checking
 
 **2.3 Donor Dashboard**
+
 - [✅] Create `app/(dashboard)/donor/page.tsx`
 - [✅] Display total donations count
 - [✅] Show active donations with status
@@ -374,6 +392,7 @@ src/
 - [✅] Implement donation status breakdown (pie chart or stats)
 
 **2.4 Volunteer Dashboard**
+
 - [✅] Create `app/(dashboard)/volunteer/page.tsx`
 - [✅] Display active claims count
 - [✅] Show claims pending pickup
@@ -383,6 +402,7 @@ src/
 - [✅] Display total kg delivered stat
 
 **2.5 Recipient Dashboard**
+
 - [✅] Create `app/(dashboard)/recipient/page.tsx`
 - [✅] Display available donations in area
 - [✅] Show nearby donation count
@@ -390,6 +410,7 @@ src/
 - [✅] Display simplified impact stats
 
 **2.6 Shared Dashboard Components**
+
 - [✅] Create `ImpactScore.tsx` component with animation
 - [✅] Build `StatCard.tsx` for dashboard metrics
 - [✅] Create `QuickAction.tsx` card component
@@ -403,12 +424,14 @@ src/
 **Goal:** Implement complete donation CRUD operations for donors including creation, viewing, and status tracking.
 
 **Features from PROJECT-OVERVIEW. md:**
+
 - Create donation listings (title, quantity, location, expiry)
 - Real-time notifications when claimed
 - Provide pickup code for verification
 - Track donation status (available → claimed → delivered)
 
 **Integration - Endpoints from `api.js`:**
+
 - `GET /donations` → `donationAPI.list()`
 - `GET /donations/{id}` → `donationAPI.get(id)` ⚠️ (needs to be added)
 - `POST /donations` → `donationAPI.create(data)`
@@ -417,17 +440,20 @@ src/
 #### Task Checklist
 
 **3.1 Type Definitions**
+
 - [✅] Create `types/donation.ts` matching contract's Donation interface
 - [✅] Create donation status enum/constants
 - [✅] Build Zod schema for donation creation (matching API field rules)
 - [✅] Define `DonationWithClaim` type for my-donations response
 
 **3.2 API Module Enhancement**
-- [ ] Add `donationAPI.get(id)` method (missing from api.js)
-- [ ] Ensure all donation methods return typed responses
-- [ ] Add error type definitions for donation operations
+
+- [✅] Add `donationAPI.get(id)` method (missing from api.js)
+- [✅] Ensure all donation methods return typed responses
+- [✅] Add error type definitions for donation operations
 
 **3.3 Donation Listing**
+
 - [ ] Create `app/donations/page.tsx` with DonationList
 - [ ] Build `DonationCard.tsx` component with status badge
 - [ ] Implement filtering by status (available, reserved, delivered)
@@ -437,6 +463,7 @@ src/
 - [ ] Add empty state for no donations
 
 **3.4 Donation Creation**
+
 - [ ] Create `app/donations/create/page.tsx`
 - [ ] Build `DonationForm.tsx` with all required fields
 - [ ] Implement geolocation auto-detect for location
@@ -448,6 +475,7 @@ src/
 - [ ] Create loading/submitting state
 
 **3.5 Donation Detail Page**
+
 - [ ] Create `app/donations/[id]/page.tsx`
 - [ ] Display full donation information
 - [ ] Show pickup code (for donor and assigned volunteer only)
@@ -457,6 +485,7 @@ src/
 - [ ] Implement expiry countdown timer
 
 **3.6 My Donations View (Donor)**
+
 - [ ] Create dedicated my-donations page or section
 - [ ] Show all donations with claim details
 - [ ] Display volunteer contact info for claimed donations
@@ -467,15 +496,17 @@ src/
 
 ### Stage 4: Claim Workflow (Volunteer)
 
-**Goal:** Implement the complete volunteer workflow:  discovering donations, claiming, pickup verification, and delivery confirmation.
+**Goal:** Implement the complete volunteer workflow: discovering donations, claiming, pickup verification, and delivery confirmation.
 
 **Features from PROJECT-OVERVIEW. md:**
+
 - Claim donations with race-condition protection (handled by backend)
 - Verify pickup with code from donor
 - Mark as picked up → delivered workflow
 - Earn impact points (2x for deliveries)
 
 **Integration - Endpoints from `api.js`:**
+
 - `POST /donations/{id}/claim` → `donationAPI.claim(id)`
 - `GET /claims` → `claimAPI.list()`
 - `POST /claims/{id}/pickup` → `claimAPI.markPickedUp(id, pickupCode)`
@@ -485,12 +516,14 @@ src/
 #### Task Checklist
 
 **4.1 Type Definitions**
+
 - [ ] Create `types/claim.ts` matching contract's Claim interface
-- [ ] Define claim status enum:  `active`, `picked_up`, `delivered`, `cancelled`
+- [ ] Define claim status enum: `active`, `picked_up`, `delivered`, `cancelled`
 - [ ] Create Zod schema for pickup code validation
 - [ ] Create Zod schema for delivery notes
 
 **4.2 Claim Donation Flow**
+
 - [ ] Create `ClaimButton.tsx` component
 - [ ] Implement optimistic UI update on claim
 - [ ] Handle 409 Conflict (already claimed) gracefully
@@ -499,6 +532,7 @@ src/
 - [ ] Display donor contact information after claim
 
 **4.3 Claims Management Page**
+
 - [ ] Create `app/claims/page.tsx`
 - [ ] Build `ClaimCard.tsx` component
 - [ ] Display claim status with visual indicator
@@ -508,6 +542,7 @@ src/
 - [ ] Filter by status (active, picked_up, delivered)
 
 **4.4 Pickup Verification**
+
 - [ ] Create `PickupDialog.tsx` modal component
 - [ ] Implement pickup code input field
 - [ ] Add code validation feedback
@@ -516,6 +551,7 @@ src/
 - [ ] Update claim card status immediately
 
 **4.5 Delivery Confirmation**
+
 - [ ] Create `DeliverDialog.tsx` modal component
 - [ ] Implement optional notes textarea
 - [ ] Handle 409 (not picked up yet) error
@@ -524,6 +560,7 @@ src/
 - [ ] Update dashboard stats
 
 **4.6 Claim Cancellation**
+
 - [ ] Add cancel option with confirmation dialog
 - [ ] Explain that donation becomes available again
 - [ ] Implement soft delete UI pattern
@@ -536,6 +573,7 @@ src/
 **Goal:** Implement map-based donation discovery with real-time geolocation and distance-based filtering.
 
 **Features from PROJECT-OVERVIEW. md:**
+
 - View available donations on interactive map
 - Find nearby donations with geolocation
 - Green markers = available
@@ -543,11 +581,13 @@ src/
 - Radius filtering (default 10km)
 
 **Integration - Endpoints from `api.js`:**
+
 - `GET /donations/nearby? latitude={lat}&longitude={lng}&radius={km}` → `donationAPI.nearby(lat, lng, radius)`
 
 #### Task Checklist
 
 **5.1 Geolocation Hook**
+
 - [ ] Create `useGeolocation.ts` hook
 - [ ] Implement browser geolocation API wrapper
 - [ ] Handle permission denied gracefully
@@ -556,6 +596,7 @@ src/
 - [ ] Implement location refresh functionality
 
 **5.2 Map Components**
+
 - [ ] Install and configure React-Leaflet
 - [ ] Create `DonationMap.tsx` wrapper component
 - [ ] Implement custom marker icons (green = available, etc.)
@@ -565,6 +606,7 @@ src/
 - [ ] Handle SSR (dynamic import for Leaflet)
 
 **5.3 Nearby Donations Page**
+
 - [ ] Create `app/donations/nearby/page. tsx`
 - [ ] Display map with donation markers
 - [ ] Add radius selector (5km, 10km, 25km, 50km)
@@ -574,6 +616,7 @@ src/
 - [ ] Add "Use my location" button
 
 **5.4 Donation Form Location**
+
 - [ ] Add map picker to donation creation form
 - [ ] Implement click-to-set-location on map
 - [ ] Show selected coordinates
@@ -581,6 +624,7 @@ src/
 - [ ] Validate coordinates within range
 
 **5.5 Map UI Enhancements**
+
 - [ ] Add loading state while fetching location
 - [ ] Implement smooth pan/zoom animations
 - [ ] Create mobile-friendly map controls
@@ -594,28 +638,33 @@ src/
 **Goal:** Implement in-app notification system showing real-time updates for donation claims, pickups, and deliveries.
 
 **Features from PROJECT-OVERVIEW. md:**
+
 - Real-time notifications (email + in-app)
 - Donation claimed notifications
 - Donation delivered notifications
 
 **Integration - Endpoints (missing from `api.js`, defined in contract):**
+
 - `GET /notifications` → `notificationAPI.list()`
 - `POST /notifications/{id}/read` → `notificationAPI.markRead(id)`
 
 #### Task Checklist
 
 **6.1 API Module**
+
 - [ ] Create `lib/api/modules/notifications.ts`
 - [ ] Implement `list()` method
 - [ ] Implement `markRead(id)` method
 - [ ] Add types matching contract's notification structure
 
 **6.2 Type Definitions**
+
 - [ ] Create `types/notification.ts`
 - [ ] Define notification type discriminators
 - [ ] Create notification data type (donation_id, message, etc.)
 
 **6.3 Notification Components**
+
 - [ ] Create `NotificationBell.tsx` for navbar
 - [ ] Display unread count badge
 - [ ] Build dropdown with recent notifications
@@ -625,6 +674,7 @@ src/
 - [ ] Create "Mark all as read" action
 
 **6.4 Notification Center Page**
+
 - [ ] Create `app/notifications/page.tsx`
 - [ ] Display all notifications with pagination
 - [ ] Filter by read/unread status
@@ -633,6 +683,7 @@ src/
 - [ ] Add empty state
 
 **6.5 Real-time Updates (Enhancement)**
+
 - [ ] Implement polling for new notifications (every 30s)
 - [ ] Create notification toast for new items
 - [ ] Add Framer Motion entrance animation
@@ -645,22 +696,26 @@ src/
 **Goal:** Allow users to view and update their profile information including location and contact details.
 
 **Features from PROJECT-OVERVIEW.md:**
+
 - View and update profile
 - Location settings for volunteers/recipients
 - Phone number for coordination
 
 **Integration - Endpoints:**
+
 - `GET /me` → `authAPI.me()`
 - `PUT /profile` → `profileAPI.update(data)` ⚠️ (needs to be added to api.js)
 
 #### Task Checklist
 
 **7.1 API Module**
+
 - [ ] Create `lib/api/modules/profile.ts`
 - [ ] Implement `update(data)` method
 - [ ] Add response types
 
 **7.2 Profile Page**
+
 - [ ] Create `app/profile/page.tsx`
 - [ ] Display current user information
 - [ ] Show role badges
@@ -668,14 +723,16 @@ src/
 - [ ] Show account creation date
 
 **7.3 Profile Edit Form**
+
 - [ ] Build profile edit form component
 - [ ] Editable fields: name, phone, latitude, longitude
-- [ ] Non-editable:  email, role
+- [ ] Non-editable: email, role
 - [ ] Add location picker for coordinates
 - [ ] Implement form validation
 - [ ] Show success toast on update
 
 **7.4 Account Settings**
+
 - [ ] Add password change section (future)
 - [ ] Add notification preferences (future)
 - [ ] Add danger zone (delete account - future)
@@ -687,6 +744,7 @@ src/
 **Goal:** Enhance user experience with animations, transitions, and ensure full accessibility compliance.
 
 **Features:**
+
 - Smooth page transitions
 - Micro-interactions on buttons and cards
 - Loading skeletons
@@ -696,12 +754,14 @@ src/
 #### Task Checklist
 
 **8.1 Page Transitions**
+
 - [ ] Implement Framer Motion page transitions
 - [ ] Create shared layout animations
 - [ ] Add exit animations for route changes
 - [ ] Optimize for reduced motion preference
 
 **8.2 Component Animations**
+
 - [ ] Add hover/tap animations to cards
 - [ ] Implement button loading spinners
 - [ ] Create success/error state animations
@@ -709,12 +769,14 @@ src/
 - [ ] Implement modal enter/exit animations
 
 **8.3 Loading States**
+
 - [ ] Create skeleton components for each data type
 - [ ] Implement suspense boundaries
 - [ ] Add loading. tsx files for each route group
 - [ ] Create global loading indicator
 
 **8.4 Accessibility Audit**
+
 - [ ] Run axe-core accessibility tests
 - [ ] Ensure all images have alt text
 - [ ] Add ARIA labels to interactive elements
@@ -724,6 +786,7 @@ src/
 - [ ] Ensure color contrast compliance
 
 **8.5 Responsive Polish**
+
 - [ ] Test all breakpoints (mobile, tablet, desktop)
 - [ ] Optimize touch targets for mobile
 - [ ] Adjust typography for readability
@@ -733,11 +796,12 @@ src/
 
 ### Stage 9: Testing & Quality Assurance
 
-**Goal:** Implement comprehensive testing strategy including unit tests, integration tests, and E2E tests. 
+**Goal:** Implement comprehensive testing strategy including unit tests, integration tests, and E2E tests.
 
 #### Task Checklist
 
 **9.1 Testing Setup**
+
 - [ ] Configure Vitest for unit testing
 - [ ] Set up React Testing Library
 - [ ] Configure Playwright for E2E testing
@@ -745,6 +809,7 @@ src/
 - [ ] Create test utilities and helpers
 
 **9.2 Unit Tests**
+
 - [ ] Test API client interceptors
 - [ ] Test Zod validation schemas
 - [ ] Test utility functions (formatters, validators)
@@ -752,6 +817,7 @@ src/
 - [ ] Test auth context state management
 
 **9.3 Component Tests**
+
 - [ ] Test form components with validation
 - [ ] Test DonationCard rendering
 - [ ] Test ClaimCard status display
@@ -759,6 +825,7 @@ src/
 - [ ] Test conditional rendering based on role
 
 **9.4 Integration Tests**
+
 - [ ] Test login flow end-to-end
 - [ ] Test registration with role selection
 - [ ] Test donation creation flow
@@ -766,8 +833,9 @@ src/
 - [ ] Test error handling displays
 
 **9.5 E2E Tests (Playwright)**
+
 - [ ] Test complete user journeys per role
-- [ ] Test donor:  create donation → view → see claimed
+- [ ] Test donor: create donation → view → see claimed
 - [ ] Test volunteer: browse → claim → pickup → deliver
 - [ ] Test authentication persistence
 - [ ] Test responsive behavior
@@ -781,6 +849,7 @@ src/
 #### Task Checklist
 
 **10.1 Build Optimization**
+
 - [ ] Run production build and analyze bundle
 - [ ] Optimize images with next/image
 - [ ] Implement code splitting for routes
@@ -788,6 +857,7 @@ src/
 - [ ] Set up environment variables for production
 
 **10.2 Documentation**
+
 - [ ] Write README. md with setup instructions
 - [ ] Document environment variables
 - [ ] Create component documentation (Storybook optional)
@@ -795,6 +865,7 @@ src/
 - [ ] Write contribution guidelines
 
 **10.3 CI/CD Pipeline**
+
 - [ ] Set up GitHub Actions workflow
 - [ ] Configure build and test jobs
 - [ ] Add Playwright E2E test job
@@ -802,11 +873,13 @@ src/
 - [ ] Configure production deployment
 
 **10.4 Monitoring & Analytics**
+
 - [ ] Set up error tracking (Sentry optional)
 - [ ] Configure performance monitoring
 - [ ] Add analytics (privacy-friendly)
 
 **10.5 Launch Checklist**
+
 - [ ] Verify all environment variables are set
 - [ ] Test production build locally
 - [ ] Verify API connectivity to both backends
@@ -833,14 +906,14 @@ NEXT_PUBLIC_DEFAULT_LONGITUDE=31.2357
 
 ### API Module Checklist (Additions Needed)
 
-| Module | Method | Status |
-|--------|--------|--------|
-| `auth` | register, login, logout, me | ✅ Exists |
-| `donations` | list, create, claim, nearby, myDonations | ✅ Exists |
-| `donations` | get(id) | ⚠️ **Add** |
-| `claims` | list, markPickedUp, markDelivered, cancel | ✅ Exists |
-| `profile` | update | ⚠️ **Add Module** |
-| `notifications` | list, markRead | ⚠️ **Add Module** |
+| Module          | Method                                    | Status            |
+| --------------- | ----------------------------------------- | ----------------- |
+| `auth`          | register, login, logout, me               | ✅ Exists         |
+| `donations`     | list, create, claim, nearby, myDonations  | ✅ Exists         |
+| `donations`     | get(id)                                   | ⚠️ **Add**        |
+| `claims`        | list, markPickedUp, markDelivered, cancel | ✅ Exists         |
+| `profile`       | update                                    | ⚠️ **Add Module** |
+| `notifications` | list, markRead                            | ⚠️ **Add Module** |
 
 ### Key Dependencies to Install
 

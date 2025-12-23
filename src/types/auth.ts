@@ -1,4 +1,4 @@
-import type { LoginRequest, RegisterRequest } from "@/lib/api/modules/auth";
+import type { LoginRequest, RegisterRequest } from "@/lib/api";
 import type { User } from "@/types/api";
 
 export interface AuthState {

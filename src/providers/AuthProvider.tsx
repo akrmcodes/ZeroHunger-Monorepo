@@ -10,20 +10,24 @@ import {
 } from "react";
 
 import { api } from "@/lib/api";
-import { AUTH_TOKEN_KEY } from "@/lib/constants";
 import { getToken, removeToken, setToken } from "@/lib/utils/auth-storage";
-import type { LoginRequest, RegisterRequest } from "@/lib/api/modules/auth";
-import type { AuthContextType, AuthState } from "@/types/auth";
+import type { LoginRequest, RegisterRequest, User } from "@/lib/api";
+
+interface AuthContextType {
+    user: User | null;
+    isLoading: boolean;
+    login: (data: LoginRequest) => Promise<void>;
+    register: (data: RegisterRequest) => Promise<void>;
+    logout: () => Promise<void>;
+    updateUser: (user: User) => void;
+}
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
     const router = useRouter();
-    const [state, setState] = useState<AuthState>({
-        user: null,
-        isLoading: true,
-        isAuthenticated: false,
-    });
+    const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     useEffect(() => {
         let isActive = true;
@@ -37,7 +41,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const token = getToken();
 
         if (!token) {
-            setState({ user: null, isAuthenticated: false, isLoading: false });
+            setUser(null);
+            setIsLoading(false);
             return () => {
                 isActive = false;
             };
@@ -47,11 +52,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
             try {
                 const response = await api.auth.me();
                 if (!isActive) return;
-                setState({ user: response.data.user, isAuthenticated: true, isLoading: false });
+                setUser(response.data.user);
+                setIsLoading(false);
             } catch (error) {
                 if (!isActive) return;
                 removeToken();
-                setState({ user: null, isAuthenticated: false, isLoading: false });
+                setUser(null);
+                setIsLoading(false);
                 console.error("Auth verification failed", error);
             }
         };
@@ -65,19 +72,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const login = useCallback(
         async (payload: LoginRequest, remember = true): Promise<void> => {
-            setState((prev) => ({ ...prev, isLoading: true }));
+            setIsLoading(true);
             try {
                 const response = await api.auth.login(payload);
                 setToken(response.data.token, remember);
-                setState({
-                    user: response.data.user,
-                    isAuthenticated: true,
-                    isLoading: false,
-                });
+                setUser(response.data.user);
+                setIsLoading(false);
                 router.refresh();
                 router.replace("/dashboard");
             } catch (error) {
-                setState({ user: null, isAuthenticated: false, isLoading: false });
+                setUser(null);
+                setIsLoading(false);
                 throw error;
             }
         },
@@ -86,19 +91,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     const register = useCallback(
         async (payload: RegisterRequest): Promise<void> => {
-            setState((prev) => ({ ...prev, isLoading: true }));
+            setIsLoading(true);
             try {
                 const response = await api.auth.register(payload);
                 setToken(response.data.token, true);
-                setState({
-                    user: response.data.user,
-                    isAuthenticated: true,
-                    isLoading: false,
-                });
+                setUser(response.data.user);
+                setIsLoading(false);
                 router.refresh();
                 router.replace("/dashboard");
             } catch (error) {
-                setState({ user: null, isAuthenticated: false, isLoading: false });
+                setUser(null);
+                setIsLoading(false);
                 throw error;
             }
         },
@@ -106,20 +109,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
     );
 
     const logout = useCallback(async (): Promise<void> => {
-        setState((prev) => ({ ...prev, isLoading: true }));
+        setIsLoading(true);
         try {
             await api.auth.logout();
         } catch (error) {
             console.error("Logout failed", error);
         } finally {
             removeToken();
-            setState({ user: null, isAuthenticated: false, isLoading: false });
+            setUser(null);
+            setIsLoading(false);
             router.push("/login");
         }
     }, [router]);
 
+    const updateUser = useCallback((nextUser: User) => {
+        setUser(nextUser);
+    }, []);
+
     return (
-        <AuthContext.Provider value={{ ...state, login, register, logout }}>
+        <AuthContext.Provider
+            value={{ user, isLoading, login, register, logout, updateUser }}
+        >
             {children}
         </AuthContext.Provider>
     );
