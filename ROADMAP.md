@@ -316,12 +316,12 @@ src/
 - [✅] Add social auth placeholders (future enhancement)
 
 **1.6 Route Protection**
-- [ ] Create `middleware.ts` (or `proxy.ts` for Next.js 16) for route protection
-- [ ] Define public routes: `/`, `/login`, `/register`
-- [ ] Define protected routes: `/dashboard/*`, `/donations/*`, `/claims/*`
-- [ ] Redirect unauthenticated users to login
-- [ ] Redirect authenticated users away from auth pages
-- [ ] Create `AuthGuard` component for client-side protection
+- [✅] Create `middleware.ts` (or `proxy.ts` for Next.js 16) for route protection
+- [✅] Define public routes: `/`, `/login`, `/register`
+- [✅] Define protected routes: `/dashboard/*`, `/donations/*`, `/claims/*`
+- [✅] Redirect unauthenticated users to login
+- [✅] Redirect authenticated users away from auth pages
+- [✅] Create `AuthGuard` component for client-side protection
 
 **1.7 Landing Page**
 - [ ] Design `app/page.tsx` landing page with hero section
