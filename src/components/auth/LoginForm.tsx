@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, type Variants } from "framer-motion";
 import { Github, Chrome } from "lucide-react";
 import Link from "next/link";
+import type { Route } from "next";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -99,7 +100,7 @@ export function LoginForm() {
                             />
                             Remember me
                         </label>
-                        <Link href="/forgot-password" className="text-emerald-600 hover:text-emerald-700">
+                        <Link href={"/forgot-password" as Route} className="text-emerald-600 hover:text-emerald-700">
                             Forgot password?
                         </Link>
                     </motion.div>

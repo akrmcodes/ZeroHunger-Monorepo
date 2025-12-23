@@ -305,15 +305,15 @@ src/
 - [✅] Implement auto-logout on 401 responses
 
 **1.5 Authentication Pages**
-- [ ] Create `app/(auth)/layout.tsx` - auth pages layout (centered, branded)
-- [ ] Build `app/(auth)/login/page.tsx` with LoginForm component
-- [ ] Build `app/(auth)/register/page.tsx` with RegisterForm component
-- [ ] Implement role selection UI (donor/volunteer/recipient cards)
-- [ ] Add form validation with React Hook Form + Zod
-- [ ] Display API validation errors (422 responses)
-- [ ] Add loading states and submit animations
-- [ ] Implement "Remember me" functionality
-- [ ] Add social auth placeholders (future enhancement)
+- [✅] Create `app/(auth)/layout.tsx` - auth pages layout (centered, branded)
+- [✅] Build `app/(auth)/login/page.tsx` with LoginForm component
+- [✅] Build `app/(auth)/register/page.tsx` with RegisterForm component
+- [✅] Implement role selection UI (donor/volunteer/recipient cards)
+- [✅] Add form validation with React Hook Form + Zod
+- [✅] Display API validation errors (422 responses)
+- [✅] Add loading states and submit animations
+- [✅] Implement "Remember me" functionality
+- [✅] Add social auth placeholders (future enhancement)
 
 **1.6 Route Protection**
 - [ ] Create `middleware.ts` (or `proxy.ts` for Next.js 16) for route protection
