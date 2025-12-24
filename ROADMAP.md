@@ -351,50 +351,50 @@ src/
 #### Task Checklist
 
 **2.1 Dashboard Layout**
-- [ ] Create `app/(dashboard)/layout.tsx` with sidebar navigation
-- [ ] Build responsive `Sidebar.tsx` component with role-based menu items
-- [ ] Create `Navbar.tsx` with user menu dropdown
-- [ ] Implement `MobileNav.tsx` with hamburger menu
-- [ ] Add active route highlighting
-- [ ] Create breadcrumb navigation component
+- [✅] Create `app/(dashboard)/layout.tsx` with sidebar navigation
+- [✅] Build responsive `Sidebar.tsx` component with role-based menu items
+- [✅] Create `Navbar.tsx` with user menu dropdown
+- [✅] Implement `MobileNav.tsx` with hamburger menu
+- [✅] Add active route highlighting
+- [✅] Create breadcrumb navigation component
 
 **2.2 Role Detection & Routing**
-- [ ] Create `app/(dashboard)/page.tsx` that redirects based on role
-- [ ] Implement role-based sidebar menu filtering
-- [ ] Create role constants in `lib/constants/roles. ts`
-- [ ] Build `useUserRole` hook for role checking
+- [✅] Create `app/(dashboard)/page.tsx` that redirects based on role
+- [✅] Implement role-based sidebar menu filtering
+- [✅] Create role constants in `lib/constants/roles. ts`
+- [✅] Build `useUserRole` hook for role checking
 
 **2.3 Donor Dashboard**
-- [ ] Create `app/(dashboard)/donor/page.tsx`
-- [ ] Display total donations count
-- [ ] Show active donations with status
-- [ ] Display impact score with visual badge
-- [ ] Add "Create Donation" quick action card
-- [ ] Show recent donation activity
-- [ ] Implement donation status breakdown (pie chart or stats)
+- [✅] Create `app/(dashboard)/donor/page.tsx`
+- [✅] Display total donations count
+- [✅] Show active donations with status
+- [✅] Display impact score with visual badge
+- [✅] Add "Create Donation" quick action card
+- [✅] Show recent donation activity
+- [✅] Implement donation status breakdown (pie chart or stats)
 
 **2.4 Volunteer Dashboard**
-- [ ] Create `app/(dashboard)/volunteer/page.tsx`
-- [ ] Display active claims count
-- [ ] Show claims pending pickup
-- [ ] Display completed deliveries count
-- [ ] Add "Find Donations" quick action card
-- [ ] Show impact score with volunteer-specific messaging
-- [ ] Display total kg delivered stat
+- [✅] Create `app/(dashboard)/volunteer/page.tsx`
+- [✅] Display active claims count
+- [✅] Show claims pending pickup
+- [✅] Display completed deliveries count
+- [✅] Add "Find Donations" quick action card
+- [✅] Show impact score with volunteer-specific messaging
+- [✅] Display total kg delivered stat
 
 **2.5 Recipient Dashboard**
-- [ ] Create `app/(dashboard)/recipient/page.tsx`
-- [ ] Display available donations in area
-- [ ] Show nearby donation count
-- [ ] Add "View Available" quick action card
-- [ ] Display simplified impact stats
+- [✅] Create `app/(dashboard)/recipient/page.tsx`
+- [✅] Display available donations in area
+- [✅] Show nearby donation count
+- [✅] Add "View Available" quick action card
+- [✅] Display simplified impact stats
 
 **2.6 Shared Dashboard Components**
-- [ ] Create `ImpactScore.tsx` component with animation
-- [ ] Build `StatCard.tsx` for dashboard metrics
-- [ ] Create `QuickAction.tsx` card component
-- [ ] Build `RecentActivity.tsx` feed component
-- [ ] Add skeleton loading states for all dashboard sections
+- [✅] Create `ImpactScore.tsx` component with animation
+- [✅] Build `StatCard.tsx` for dashboard metrics
+- [✅] Create `QuickAction.tsx` card component
+- [✅] Build `RecentActivity.tsx` feed component
+- [⚠️] Add skeleton loading states for all dashboard sections
 
 ---
 

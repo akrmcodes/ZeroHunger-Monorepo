@@ -74,12 +74,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
                     isAuthenticated: true,
                     isLoading: false,
                 });
+                router.refresh();
+                router.replace("/dashboard");
             } catch (error) {
                 setState({ user: null, isAuthenticated: false, isLoading: false });
                 throw error;
             }
         },
-        []
+        [router]
     );
 
     const register = useCallback(
@@ -93,12 +95,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
                     isAuthenticated: true,
                     isLoading: false,
                 });
+                router.refresh();
+                router.replace("/dashboard");
             } catch (error) {
                 setState({ user: null, isAuthenticated: false, isLoading: false });
                 throw error;
             }
         },
-        []
+        [router]
     );
 
     const logout = useCallback(async (): Promise<void> => {
