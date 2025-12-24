@@ -1,4 +1,4 @@
-import type { User } from "@/types/api";
+import type { User } from "@/lib/api";
 
 export enum DonationStatus {
   Pending = "pending",
@@ -24,6 +24,7 @@ export interface Claim {
   picked_up_at: string | null;
   delivered_at: string | null;
   notes?: string | null;
+  volunteer?: User;
   created_at: string;
   updated_at?: string;
 }

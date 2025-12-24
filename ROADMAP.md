@@ -476,13 +476,13 @@ src/
 
 **3.5 Donation Detail Page**
 
-- [ ] Create `app/donations/[id]/page.tsx`
-- [ ] Display full donation information
-- [ ] Show pickup code (for donor and assigned volunteer only)
-- [ ] Display claim status and volunteer info
-- [ ] Add donation timeline/history
-- [ ] Show location on embedded map
-- [ ] Implement expiry countdown timer
+- [✅] Create `app/donations/[id]/page.tsx`
+- [✅] Display full donation information
+- [✅] Show pickup code (for donor and assigned volunteer only)
+- [✅] Display claim status and volunteer info
+- [✅] Add donation timeline/history
+- [✅] Show location on embedded map
+- [✅] Implement expiry countdown timer
 
 **3.6 My Donations View (Donor)**
 
