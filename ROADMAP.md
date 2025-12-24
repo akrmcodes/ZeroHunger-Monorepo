@@ -456,7 +456,7 @@ src/
 
 - [✅] Create `app/donations/page.tsx` with DonationList
 - [✅] Build `DonationCard.tsx` component with status badge
-- [⚠️] Implement filtering by status (available, reserved, delivered)
+- [✅] Implement filtering by status (available, reserved, delivered)
 - [⚠️] Add sorting options (newest, expiring soon)
 - [✅] Create `StatusBadge.tsx` component with color coding
 - [⚠️] Implement pagination or infinite scroll
@@ -486,11 +486,11 @@ src/
 
 **3.6 My Donations View (Donor)**
 
-- [ ] Create dedicated my-donations page or section
-- [ ] Show all donations with claim details
-- [ ] Display volunteer contact info for claimed donations
-- [ ] Add status filters specific to donor view
-- [ ] Implement bulk actions (future enhancement)
+- [✅] Create dedicated my-donations page or section
+- [✅] Show all donations with claim details
+- [✅] Display volunteer contact info for claimed donations
+- [✅] Add status filters specific to donor view
+- [✅] Implement bulk actions (future enhancement)
 
 ---
 
