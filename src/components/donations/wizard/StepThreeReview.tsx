@@ -8,19 +8,14 @@ import { useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DonationFormValues } from "@/lib/validators/donation";
-import { FoodType } from "@/types/donation";
+import { FoodType, FOOD_TYPE_LABELS } from "@/types/donation";
 
 interface StepThreeReviewProps {
     onBack: () => void;
 }
 
-const foodTypeLabel: Record<FoodType, string> = {
-    [FoodType.CookedMeal]: "Cooked Meal",
-    [FoodType.Groceries]: "Groceries",
-    [FoodType.Bakery]: "Bakery",
-    [FoodType.Vegetables]: "Vegetables",
-    [FoodType.Canned]: "Canned",
-};
+// Use the centralized labels from donation types
+const foodTypeLabel = FOOD_TYPE_LABELS;
 
 export function StepThreeReview({ onBack }: StepThreeReviewProps) {
     const form = useFormContext<DonationFormValues>();

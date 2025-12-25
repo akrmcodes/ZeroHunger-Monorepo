@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Package, Salad, Soup, Wheat } from "lucide-react";
+import { Coffee, MapPin, Milk, Package, Salad, Soup, Wheat } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { motion } from "framer-motion";
 
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/donations/StatusBadge";
 import { Donation, FoodType } from "@/types/donation";
-import { cn } from "@/lib/utils";
 
 interface DonationCardProps {
     donation: Donation;
@@ -15,16 +14,19 @@ interface DonationCardProps {
     actionLabel?: string;
 }
 
-const foodIcons: Record<FoodType, React.ComponentType<{ className?: string }>> = {
+const foodIcons: Partial<Record<FoodType, React.ComponentType<{ className?: string }>>> = {
     [FoodType.CookedMeal]: Soup,
     [FoodType.Groceries]: Package,
     [FoodType.Bakery]: Wheat,
     [FoodType.Vegetables]: Salad,
     [FoodType.Canned]: Package,
+    [FoodType.Dairy]: Milk,
+    [FoodType.Beverages]: Coffee,
+    [FoodType.Other]: Package,
 };
 
 export function DonationCard({ donation, onAction, actionLabel = "View details" }: DonationCardProps) {
-    const Icon = donation.food_type ? foodIcons[donation.food_type] : Package;
+    const Icon = donation.food_type ? (foodIcons[donation.food_type as FoodType] ?? Package) : Package;
     const expiresIn = donation.expires_at
         ? formatDistanceToNowStrict(new Date(donation.expires_at), { addSuffix: true })
         : "No expiry";

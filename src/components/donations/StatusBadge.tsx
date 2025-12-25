@@ -1,4 +1,4 @@
-import { BadgeCheck, Clock, FlagTriangleRight, PackageCheck, ShieldAlert } from "lucide-react";
+import { BadgeCheck, Ban, Clock, FlagTriangleRight, PackageCheck, ShieldAlert } from "lucide-react";
 import { DonationStatus } from "@/types/donation";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +34,11 @@ const STATUS_STYLES: Record<DonationStatus, Variant> = {
         bg: "bg-neutral-100",
         text: "text-neutral-800",
         Icon: ShieldAlert,
+    },
+    [DonationStatus.Cancelled]: {
+        bg: "bg-red-100",
+        text: "text-red-800",
+        Icon: Ban,
     },
 };
 

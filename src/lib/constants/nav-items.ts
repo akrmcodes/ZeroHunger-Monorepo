@@ -20,7 +20,7 @@ export const NAV_ITEMS: Record<Role, NavItem[]> = {
   ],
   volunteer: [
     { title: "Dashboard", href: "/dashboard", icon: Home },
-    { title: "Browse Donations", href: "/donations", icon: Search },
+    { title: "Browse Donations", href: "/browse", icon: Search },
     { title: "My Claims", href: "/claims", icon: Truck },
     { title: "Profile", href: "/profile", icon: User },
   ],

@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Clock, PackageCheck, Truck } from "lucide-react";
+import { Ban, CheckCircle2, Clock, PackageCheck, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Donation, DonationStatus } from "@/types/donation";
 
@@ -21,10 +21,21 @@ const stepMeta: Record<DonationStatus, { label: string; Icon: React.ComponentTyp
     [DonationStatus.PickedUp]: { label: "Picked Up", Icon: Truck },
     [DonationStatus.Delivered]: { label: "Delivered", Icon: CheckCircle2 },
     [DonationStatus.Expired]: { label: "Expired", Icon: Clock },
+    [DonationStatus.Cancelled]: { label: "Cancelled", Icon: Ban },
 };
 
 export function DonationTimeline({ donation }: DonationTimelineProps) {
-    const currentIndex = Math.max(stepOrder.indexOf(donation.status as DonationStatus), 0);
+    const statusIndexLookup: Record<string, number> = {
+        pending: 0,
+        available: 0,
+        claimed: 1,
+        active: 1,
+        picked_up: 2,
+        delivered: 3,
+    };
+
+    const normalizedStatus = String(donation.status).toLowerCase();
+    const currentIndex = statusIndexLookup[normalizedStatus] ?? 0;
 
     const timestamps: Partial<Record<DonationStatus, string | null>> = {
         [DonationStatus.Pending]: donation.created_at,

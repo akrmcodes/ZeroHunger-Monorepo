@@ -38,13 +38,21 @@ export function PickupControl({ donation }: PickupControlProps) {
     }, [expiresAt]);
 
     const pickupCode = useMemo(() => {
-        const idSource = donation.claim?.id ?? donation.id;
-        if (typeof idSource === "number" && Number.isFinite(idSource)) {
-            return idSource.toString().padStart(6, "0");
-        }
-        console.warn("PickupControl: missing donation/claim id", { donation });
-        return "000000";
-    }, [donation]);
+        const claimPickupCode =
+            donation.claim && "pickup_code" in donation.claim
+                ? (donation.claim as { pickup_code?: string | number }).pickup_code
+                : undefined;
+
+        const codeCandidate = [
+            claimPickupCode,
+            donation.pickup_code,
+            donation.claim?.id,
+            donation.id,
+        ].find((value) => value !== null && value !== undefined);
+
+        const normalizedCode = String(codeCandidate ?? donation.id);
+        return normalizedCode.slice(-6).padStart(6, "0");
+    }, [donation.claim, donation.pickup_code, donation.id]);
 
     const handleNavigate = () => {
         const lat = donation.latitude;
@@ -97,7 +105,7 @@ export function PickupControl({ donation }: PickupControlProps) {
                         </div>
                     </div>
 
-                    <div className="relative overflow-hidden rounded-xl border border-border/70 bg-gradient-to-br from-slate-900 to-slate-700 text-white">
+                    <div className="relative overflow-hidden rounded-xl border border-border/70 bg-linear-to-br from-slate-900 to-slate-700 text-white">
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.1),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.12),transparent_30%)]" aria-hidden />
                         <div className="relative space-y-2 p-4">
                             <p className="text-sm font-semibold">Pickup Location</p>
