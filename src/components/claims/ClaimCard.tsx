@@ -1,11 +1,25 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Copy, ExternalLink, MapPin, Phone } from "lucide-react";
+import {
+    Award,
+    CheckCircle2,
+    Copy,
+    ExternalLink,
+    MapPin,
+    PackageCheck,
+    Phone,
+    Truck,
+    XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 
+import { CancelClaimDialog } from "@/components/claims/CancelClaimDialog";
+import { DeliverConfirmDialog } from "@/components/claims/DeliverConfirmDialog";
+import { PickupVerifyDialog } from "@/components/claims/PickupVerifyDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +35,7 @@ export interface ClaimWithDonation extends Claim {
 interface ClaimCardProps {
     claim: ClaimWithDonation;
     index?: number;
+    onStatusChange?: () => void;
 }
 
 const statusAccent: Record<string, string> = {
@@ -50,10 +65,25 @@ function mapClaimStatusToDonationStatus(status: Claim["status"]): DonationStatus
     }
 }
 
-export function ClaimCard({ claim, index = 0 }: ClaimCardProps) {
+export function ClaimCard({ claim, index = 0, onStatusChange }: ClaimCardProps) {
+    const router = useRouter();
     const donation = claim.donation;
     const statusClass = statusAccent[claim.status] ?? "border-l-4 border-l-slate-300";
     const badgeStatus = donation?.status ?? mapClaimStatusToDonationStatus(claim.status);
+
+    // Dialog states
+    const [pickupDialogOpen, setPickupDialogOpen] = useState(false);
+    const [deliverDialogOpen, setDeliverDialogOpen] = useState(false);
+    const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+
+    const handleStatusChangeSuccess = useCallback(() => {
+        if (onStatusChange) {
+            onStatusChange();
+        } else {
+            // Fallback: refresh the page data
+            router.refresh();
+        }
+    }, [onStatusChange, router]);
 
     const pickupCode = useMemo(() => {
         const codeCandidate = [
@@ -173,20 +203,95 @@ export function ClaimCard({ claim, index = 0 }: ClaimCardProps) {
                             </Button>
                         </div>
                     )}
+
+                    {/* Mission Complete Badge for delivered claims */}
+                    {claim.status === "delivered" && (
+                        <div className="flex items-center gap-3 rounded-lg bg-emerald-50 px-4 py-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100">
+                                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-emerald-800">Mission Complete!</p>
+                                <p className="text-xs text-emerald-600">
+                                    Delivered {claim.delivered_at ? new Date(claim.delivered_at).toLocaleDateString() : ""}
+                                </p>
+                            </div>
+                            <Award className="ml-auto h-5 w-5 text-amber-500" />
+                        </div>
+                    )}
                 </CardContent>
 
-                <CardFooter className="flex items-center justify-between border-t pt-4">
-                    <div className="text-xs text-muted-foreground">
-                        Updated {new Date(claim.updated_at ?? claim.created_at).toLocaleString()}
+                {/* Smart Footer: Action buttons based on claim status */}
+                <CardFooter className="flex flex-col gap-3 border-t pt-4">
+                    {/* Primary action buttons */}
+                    {claim.status === "active" && (
+                        <div className="flex w-full gap-2">
+                            <Button
+                                onClick={() => setPickupDialogOpen(true)}
+                                className="flex-1 bg-primary hover:bg-primary/90"
+                            >
+                                <PackageCheck className="mr-2 h-4 w-4" />
+                                Verify Pickup
+                            </Button>
+                            <Button
+                                onClick={() => setCancelDialogOpen(true)}
+                                variant="outline"
+                                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                            >
+                                <XCircle className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+
+                    {claim.status === "picked_up" && (
+                        <Button
+                            onClick={() => setDeliverDialogOpen(true)}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700"
+                        >
+                            <Truck className="mr-2 h-4 w-4" />
+                            Confirm Delivery
+                        </Button>
+                    )}
+
+                    {/* Secondary info row */}
+                    <div className="flex w-full items-center justify-between">
+                        <p className="text-xs text-muted-foreground">
+                            Updated {new Date(claim.updated_at ?? claim.created_at).toLocaleString()}
+                        </p>
+                        <Button asChild size="sm" variant="ghost" className="h-auto p-0 text-xs text-muted-foreground hover:text-foreground">
+                            <Link href={`/donations/${claim.donation_id}`} className="flex items-center gap-1">
+                                <ExternalLink className="h-3 w-3" />
+                                View Details
+                            </Link>
+                        </Button>
                     </div>
-                    <Button asChild size="sm" variant="outline">
-                        <Link href={`/donations/${claim.donation_id}`} className="flex items-center gap-2">
-                            <ExternalLink className="h-4 w-4" />
-                            View Details
-                        </Link>
-                    </Button>
                 </CardFooter>
             </Card>
+
+            {/* Dialogs */}
+            <PickupVerifyDialog
+                claimId={claim.id}
+                donationTitle={donation?.title}
+                open={pickupDialogOpen}
+                onOpenChange={setPickupDialogOpen}
+                onSuccess={handleStatusChangeSuccess}
+            />
+
+            <DeliverConfirmDialog
+                claimId={claim.id}
+                donationTitle={donation?.title}
+                open={deliverDialogOpen}
+                onOpenChange={setDeliverDialogOpen}
+                onSuccess={handleStatusChangeSuccess}
+            />
+
+            <CancelClaimDialog
+                claimId={claim.id}
+                donationTitle={donation?.title}
+                open={cancelDialogOpen}
+                onOpenChange={setCancelDialogOpen}
+                onSuccess={handleStatusChangeSuccess}
+            />
         </motion.div>
     );
 }

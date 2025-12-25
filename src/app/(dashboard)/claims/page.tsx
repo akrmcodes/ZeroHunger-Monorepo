@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { ClaimCard, type ClaimWithDonation } from "@/components/claims/ClaimCard";
 import { ClaimsStats } from "@/components/claims/ClaimsStats";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, type ApiError } from "@/lib/api";
@@ -200,7 +200,7 @@ export default function ClaimsPage() {
                             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
                         >
                             {filteredClaims.map((claim, idx) => (
-                                <ClaimCard key={claim.id} claim={claim} index={idx} />
+                                <ClaimCard key={claim.id} claim={claim} index={idx} onStatusChange={() => fetchClaims()} />
                             ))}
                         </motion.div>
                     )}

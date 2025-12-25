@@ -543,28 +543,28 @@ src/
 
 **4.4 Pickup Verification**
 
-- [ ] Create `PickupDialog.tsx` modal component
-- [ ] Implement pickup code input field
-- [ ] Add code validation feedback
-- [ ] Handle 422 (invalid code) error
-- [ ] Show success confirmation with animation
-- [ ] Update claim card status immediately
+- [✅] Create `PickupDialog.tsx` modal component
+- [✅] Implement pickup code input field
+- [✅] Add code validation feedback
+- [✅] Handle 422 (invalid code) error
+- [✅] Show success confirmation with animation
+- [✅] Update claim card status immediately
 
 **4.5 Delivery Confirmation**
 
-- [ ] Create `DeliverDialog.tsx` modal component
-- [ ] Implement optional notes textarea
-- [ ] Handle 409 (not picked up yet) error
-- [ ] Show thank you message on success
-- [ ] Display impact points earned
-- [ ] Update dashboard stats
+- [✅] Create `DeliverDialog.tsx` modal component
+- [✅] Implement optional notes textarea
+- [✅] Handle 409 (not picked up yet) error
+- [✅] Show thank you message on success
+- [✅] Display impact points earned
+- [✅] Update dashboard stats
 
 **4.6 Claim Cancellation**
 
-- [ ] Add cancel option with confirmation dialog
-- [ ] Explain that donation becomes available again
-- [ ] Implement soft delete UI pattern
-- [ ] Update list after cancellation
+- [✅] Add cancel option with confirmation dialog
+- [✅] Explain that donation becomes available again
+- [✅] Implement soft delete UI pattern
+- [✅] Update list after cancellation
 
 ---
 
