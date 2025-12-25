@@ -216,10 +216,6 @@ export default function BrowseDonationsPage() {
     const [filterTab, setFilterTab] = useState<FilterTab>("all");
     const [searchQuery, setSearchQuery] = useState("");
 
-    // 🔧 DEBUG: Store raw response for visual debugging
-    const [debugRawResponse, setDebugRawResponse] = useState<unknown>(null);
-    const [showDebug, setShowDebug] = useState(false);
-
     // -------------------------------------------------------------------------
     // DATA FETCHING
     // -------------------------------------------------------------------------
@@ -231,9 +227,6 @@ export default function BrowseDonationsPage() {
             // 🔍 DEBUG: Log raw API response structure
             console.log("🔍 [Browse] Raw API Response:", response);
             console.log("🔍 [Browse] Response type:", typeof response);
-
-            // Store for visual debugging
-            setDebugRawResponse(response);
 
             // =================================================================
             // BULLETPROOF DATA EXTRACTION
@@ -364,39 +357,6 @@ export default function BrowseDonationsPage() {
 
     return (
         <div className="space-y-6 p-4">
-            {/* 🔧 VISUAL DEBUG PANEL - Remove in production */}
-            <div className="rounded-lg border-2 border-dashed border-orange-400 bg-orange-50 p-4">
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-orange-700">
-                        🔧 DEBUG PANEL (Remove in production)
-                    </span>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowDebug(!showDebug)}
-                        className="text-orange-700 border-orange-400"
-                    >
-                        {showDebug ? "Hide" : "Show"} Raw API Response
-                    </Button>
-                </div>
-                <div className="text-xs space-y-1 text-orange-800">
-                    <p>📊 <strong>Total donations fetched:</strong> {donations.length}</p>
-                    <p>✅ <strong>After filter:</strong> {filteredDonations.length}</p>
-                    <p>📝 <strong>Status breakdown:</strong> {JSON.stringify(
-                        donations.reduce((acc, d) => {
-                            const s = String(d.status).toLowerCase();
-                            acc[s] = (acc[s] || 0) + 1;
-                            return acc;
-                        }, {} as Record<string, number>)
-                    )}</p>
-                </div>
-                {showDebug && (
-                    <pre className="mt-3 max-h-96 overflow-auto rounded bg-gray-900 p-3 text-xs text-green-400">
-                        {JSON.stringify(debugRawResponse, null, 2)}
-                    </pre>
-                )}
-            </div>
-
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>

@@ -38,12 +38,14 @@ export function PickupControl({ donation }: PickupControlProps) {
     }, [expiresAt]);
 
     const pickupCode = useMemo(() => {
-        const idSource = donation.claim?.id ?? donation.id;
-        if (typeof idSource === "number" && Number.isFinite(idSource)) {
-            return idSource.toString().padStart(6, "0");
+        // PRIORITY 1: If there is an active claim, use claim pickup code or claim id
+        if (donation.claim) {
+            const code = (donation.claim as { pickup_code?: string | number }).pickup_code ?? donation.claim.id;
+            return String(code).slice(-6).padStart(6, "0");
         }
-        console.warn("PickupControl: missing donation/claim id", { donation });
-        return "000000";
+
+        // PRIORITY 2: Fallback to Donation ID (unclaimed yet)
+        return String(donation.id).padStart(6, "0");
     }, [donation]);
 
     const handleNavigate = () => {
@@ -97,7 +99,7 @@ export function PickupControl({ donation }: PickupControlProps) {
                         </div>
                     </div>
 
-                    <div className="relative overflow-hidden rounded-xl border border-border/70 bg-gradient-to-br from-slate-900 to-slate-700 text-white">
+                    <div className="relative overflow-hidden rounded-xl border border-border/70 bg-linear-to-br from-slate-900 to-slate-700 text-white">
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.1),transparent_35%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.12),transparent_30%)]" aria-hidden />
                         <div className="relative space-y-2 p-4">
                             <p className="text-sm font-semibold">Pickup Location</p>

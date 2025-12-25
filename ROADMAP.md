@@ -517,19 +517,19 @@ src/
 
 **4.1 Type Definitions**
 
-- [ ] Create `types/claim.ts` matching contract's Claim interface
-- [ ] Define claim status enum: `active`, `picked_up`, `delivered`, `cancelled`
-- [ ] Create Zod schema for pickup code validation
-- [ ] Create Zod schema for delivery notes
+- [✅] Create `types/claim.ts` matching contract's Claim interface
+- [✅] Define claim status enum: `active`, `picked_up`, `delivered`, `cancelled`
+- [✅] Create Zod schema for pickup code validation
+- [✅] Create Zod schema for delivery notes
 
 **4.2 Claim Donation Flow**
 
-- [ ] Create `ClaimButton.tsx` component
-- [ ] Implement optimistic UI update on claim
-- [ ] Handle 409 Conflict (already claimed) gracefully
-- [ ] Show pickup code in success dialog
-- [ ] Add Framer Motion success animation
-- [ ] Display donor contact information after claim
+- [✅] Create `ClaimButton.tsx` component
+- [✅] Implement optimistic UI update on claim
+- [✅] Handle 409 Conflict (already claimed) gracefully
+- [✅] Show pickup code in success dialog
+- [✅] Add Framer Motion success animation
+- [✅] Display donor contact information after claim
 
 **4.3 Claims Management Page**
 

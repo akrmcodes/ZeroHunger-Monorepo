@@ -275,36 +275,8 @@ export default function DonationDetailPage() {
     // RENDER: Main Content
     // -------------------------------------------------------------------------
 
-    // Extract donor ID for debug display
-    const donorIdRaw = donation.donor?.id ?? donation.donor_id ?? "N/A";
-
     return (
         <div className="space-y-6 p-4">
-            {/* 🔧 VISUAL DEBUG PANEL - Remove in production */}
-            <div className="rounded-lg border-2 border-dashed border-purple-400 bg-purple-50 p-4">
-                <span className="text-sm font-bold text-purple-700">
-                    🔧 DEBUG PANEL (Remove in production)
-                </span>
-                <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-purple-800">
-                    <p>👤 <strong>User ID:</strong> {user?.id ?? "null"}</p>
-                    <p>🏠 <strong>Donor ID (from API):</strong> {String(donorIdRaw)}</p>
-                    <p>🎭 <strong>User Role:</strong> {user?.roles?.[0] ?? "none"}</p>
-                    <p>📋 <strong>Donation Status:</strong> {donation.status}</p>
-                    <p className="col-span-2">
-                        🎯 <strong>Resolved viewMode:</strong>{" "}
-                        <span className="rounded bg-purple-200 px-2 py-0.5 font-mono font-bold">
-                            {viewMode}
-                        </span>
-                    </p>
-                    <p className="col-span-2">
-                        🔗 <strong>donor object:</strong> {JSON.stringify(donation.donor)}
-                    </p>
-                    <p className="col-span-2">
-                        🔢 <strong>donor_id field:</strong> {String(donation.donor_id ?? "undefined")}
-                    </p>
-                </div>
-            </div>
-
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="space-y-1">
