@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { Coffee, MapPin, Milk, Package, Salad, Soup, Wheat } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
-import { motion } from "framer-motion";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { AnimatedCard } from "@/components/ui/animated-card";
 import { StatusBadge } from "@/components/donations/StatusBadge";
 import { Donation, FoodType } from "@/types/donation";
 
@@ -14,6 +14,8 @@ interface DonationCardProps {
     actionLabel?: string;
     /** Distance label to display (e.g., "2.5km") */
     distanceLabel?: string;
+    /** Enable shared layout animation with layoutId */
+    enableLayoutAnimation?: boolean;
 }
 
 const foodIcons: Partial<Record<FoodType, React.ComponentType<{ className?: string }>>> = {
@@ -27,20 +29,28 @@ const foodIcons: Partial<Record<FoodType, React.ComponentType<{ className?: stri
     [FoodType.Other]: Package,
 };
 
-export function DonationCard({ donation, onAction, actionLabel = "View details", distanceLabel }: DonationCardProps) {
+export function DonationCard({
+    donation,
+    onAction,
+    actionLabel = "View details",
+    distanceLabel,
+    enableLayoutAnimation = false
+}: DonationCardProps) {
     const Icon = donation.food_type ? (foodIcons[donation.food_type as FoodType] ?? Package) : Package;
     const expiresIn = donation.expires_at
         ? formatDistanceToNowStrict(new Date(donation.expires_at), { addSuffix: true })
         : "No expiry";
 
     return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ y: -5 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+        <AnimatedCard
+            layoutId={enableLayoutAnimation ? `donation-card-${donation.id}` : undefined}
+            layout={enableLayoutAnimation ? "position" : false}
+            hoverLift={6}
+            hoverScale={1.02}
+            enableGlow
+            className="h-full"
         >
-            <Card className="relative overflow-hidden border border-border/60 shadow-sm">
+            <Card className="relative h-full overflow-hidden border border-border/60 shadow-sm">
                 {/* Distance badge - appears when provided */}
                 {distanceLabel && (
                     <div className="absolute top-2 right-2 z-10">
@@ -96,6 +106,6 @@ export function DonationCard({ donation, onAction, actionLabel = "View details",
                     </Button>
                 </CardFooter>
             </Card>
-        </motion.div>
+        </AnimatedCard>
     );
 }

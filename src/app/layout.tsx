@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { NotificationProvider } from "@/context/NotificationContext";
 import QueryProvider from "@/providers/QueryProvider";
+import { MotionProvider } from "@/components/ui/motion-system";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +34,9 @@ export default function RootLayout({
       >
         <QueryProvider>
           <AuthProvider>
-            <NotificationProvider>{children}</NotificationProvider>
+            <NotificationProvider>
+              <MotionProvider>{children}</MotionProvider>
+            </NotificationProvider>
           </AuthProvider>
         </QueryProvider>
         <Toaster richColors position="top-center" />
