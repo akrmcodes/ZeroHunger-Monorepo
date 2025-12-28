@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -122,4 +123,74 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* =============================================================================
+   LEAFLET MAP CUSTOMIZATIONS
+   ============================================================================= */
+
+/* User location marker - pulsing blue dot */
+.user-location-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Donation marker - styled pin */
+.donation-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Location picker marker */
+.location-picker-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Fix Leaflet popup styling for dark mode */
+.leaflet-popup-content-wrapper {
+  @apply bg-popover text-popover-foreground rounded-lg shadow-lg border border-border;
+}
+
+.leaflet-popup-tip {
+  @apply bg-popover border-l border-b border-border;
+}
+
+.leaflet-popup-close-button {
+  @apply text-muted-foreground hover:text-foreground;
+}
+
+/* Fix Leaflet control styling */
+.leaflet-control-zoom a {
+  @apply bg-card text-card-foreground border-border hover:bg-muted;
+}
+
+.leaflet-control-zoom a:first-child {
+  @apply rounded-t-md;
+}
+
+.leaflet-control-zoom a:last-child {
+  @apply rounded-b-md;
+}
+
+/* Attribution styling */
+.leaflet-control-attribution {
+  @apply bg-background/80 text-muted-foreground text-xs;
+}
+
+/* Pulsing animation for user location */
+@keyframes map-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.5);
+    opacity: 0.5;
+  }
+}
+
+.user-location-marker .animate-ping {
+  animation: map-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
