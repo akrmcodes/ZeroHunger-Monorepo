@@ -12,6 +12,8 @@ interface DonationCardProps {
     donation: Donation;
     onAction?: (id: number) => void;
     actionLabel?: string;
+    /** Distance label to display (e.g., "2.5km") */
+    distanceLabel?: string;
 }
 
 const foodIcons: Partial<Record<FoodType, React.ComponentType<{ className?: string }>>> = {
@@ -25,7 +27,7 @@ const foodIcons: Partial<Record<FoodType, React.ComponentType<{ className?: stri
     [FoodType.Other]: Package,
 };
 
-export function DonationCard({ donation, onAction, actionLabel = "View details" }: DonationCardProps) {
+export function DonationCard({ donation, onAction, actionLabel = "View details", distanceLabel }: DonationCardProps) {
     const Icon = donation.food_type ? (foodIcons[donation.food_type as FoodType] ?? Package) : Package;
     const expiresIn = donation.expires_at
         ? formatDistanceToNowStrict(new Date(donation.expires_at), { addSuffix: true })
@@ -39,6 +41,16 @@ export function DonationCard({ donation, onAction, actionLabel = "View details" 
             transition={{ duration: 0.2, ease: "easeOut" }}
         >
             <Card className="relative overflow-hidden border border-border/60 shadow-sm">
+                {/* Distance badge - appears when provided */}
+                {distanceLabel && (
+                    <div className="absolute top-2 right-2 z-10">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/90 px-2 py-0.5 text-xs font-medium text-primary-foreground shadow">
+                            <MapPin className="h-3 w-3" />
+                            {distanceLabel}
+                        </span>
+                    </div>
+                )}
+
                 <CardHeader className="flex flex-row items-start justify-between gap-3">
                     <div className="flex items-center gap-2">
                         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
