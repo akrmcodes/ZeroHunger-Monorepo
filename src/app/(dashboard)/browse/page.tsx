@@ -1,31 +1,21 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { motion } from "framer-motion";
 import {
-    MapPin,
     Search,
-    Inbox,
     RefreshCw,
-    Hand,
-    Clock,
 } from "lucide-react";
 import { toast } from "sonner";
-import { formatDistanceToNowStrict } from "date-fns";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { StatusBadge } from "@/components/donations/StatusBadge";
+import { DonationGrid } from "@/components/donations/DonationGrid";
+import { MagneticButton } from "@/components/ui/magnetic-button";
 import { api } from "@/lib/api";
 import type { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import {
     Donation,
-    FoodType,
-    FOOD_TYPE_LABELS,
-    isDonationAvailable,
 } from "@/types/donation";
 
 // =============================================================================
@@ -39,171 +29,6 @@ const FILTER_TABS: { value: FilterTab; label: string }[] = [
     { value: "pending", label: "Ready to Claim" },
     { value: "claimed", label: "In Progress" },
 ];
-
-// Animation variants
-const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: { staggerChildren: 0.08 },
-    },
-};
-
-const itemVariants = {
-    hidden: { opacity: 0, y: 16 },
-    show: { opacity: 1, y: 0 },
-};
-
-// =============================================================================
-// DONATION BROWSE CARD (Volunteer-Focused)
-// =============================================================================
-
-interface BrowseCardProps {
-    donation: Donation;
-}
-
-function BrowseCard({ donation }: BrowseCardProps) {
-    const expiresIn = donation.expires_at
-        ? formatDistanceToNowStrict(new Date(donation.expires_at), { addSuffix: true })
-        : "No expiry";
-
-    const foodTypeLabel = donation.food_type
-        ? FOOD_TYPE_LABELS[donation.food_type as FoodType] ?? String(donation.food_type).replace(/_/g, " ")
-        : "Food";
-
-    const isAvailable = isDonationAvailable(donation);
-
-    return (
-        <motion.div
-            variants={itemVariants}
-            whileHover={{ y: -4 }}
-            transition={{ duration: 0.2 }}
-        >
-            <Card className={cn(
-                "relative h-full overflow-hidden border border-border/60 shadow-sm transition-shadow hover:shadow-md",
-                isAvailable && "border-l-4 border-l-emerald-500"
-            )}>
-                <CardHeader className="space-y-2 pb-2">
-                    <div className="flex items-start justify-between gap-2">
-                        <CardTitle className="line-clamp-1 text-base font-semibold leading-tight">
-                            {donation.title}
-                        </CardTitle>
-                        <StatusBadge status={donation.status} />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                        {foodTypeLabel} • {donation.quantity ?? 0} kg
-                    </p>
-                </CardHeader>
-
-                <CardContent className="space-y-3 pb-3">
-                    {donation.pickup_address && (
-                        <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                            <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                            <p className="line-clamp-2">{donation.pickup_address}</p>
-                        </div>
-                    )}
-
-                    <div className="flex items-center gap-2">
-                        <div className={cn(
-                            "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-                            isAvailable
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-secondary text-secondary-foreground"
-                        )}>
-                            <Clock className="h-3 w-3" />
-                            Expires {expiresIn}
-                        </div>
-                    </div>
-                </CardContent>
-
-                <CardFooter className="flex items-center justify-between gap-2 border-t pt-3">
-                    <p className="text-xs text-muted-foreground">
-                        Posted {formatDistanceToNowStrict(new Date(donation.created_at), { addSuffix: true })}
-                    </p>
-                    <Button
-                        asChild
-                        size="sm"
-                        variant={isAvailable ? "default" : "outline"}
-                        className={cn(isAvailable && "bg-emerald-600 hover:bg-emerald-700")}
-                    >
-                        <Link href={`/donations/${donation.id}`}>
-                            {isAvailable ? (
-                                <>
-                                    <Hand className="mr-1.5 h-3.5 w-3.5" />
-                                    Claim
-                                </>
-                            ) : (
-                                "View Details"
-                            )}
-                        </Link>
-                    </Button>
-                </CardFooter>
-            </Card>
-        </motion.div>
-    );
-}
-
-// =============================================================================
-// SKELETON LOADER
-// =============================================================================
-
-function BrowseGridSkeleton() {
-    return (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, idx) => (
-                <div
-                    key={idx}
-                    className="animate-pulse rounded-xl border border-border/60 bg-card p-4 shadow-sm"
-                >
-                    <div className="mb-3 flex items-center justify-between">
-                        <div className="h-5 w-32 rounded bg-muted" />
-                        <div className="h-5 w-16 rounded-full bg-muted" />
-                    </div>
-                    <div className="mb-2 h-4 w-20 rounded bg-muted" />
-                    <div className="mb-4 h-4 w-3/4 rounded bg-muted" />
-                    <div className="mb-4 h-6 w-28 rounded-full bg-muted" />
-                    <div className="flex items-center justify-between border-t pt-3">
-                        <div className="h-3 w-24 rounded bg-muted" />
-                        <div className="h-8 w-20 rounded bg-muted" />
-                    </div>
-                </div>
-            ))}
-        </div>
-    );
-}
-
-// =============================================================================
-// EMPTY STATE
-// =============================================================================
-
-function EmptyState({
-    hasFilters,
-    onClearFilters
-}: {
-    hasFilters: boolean;
-    onClearFilters: () => void;
-}) {
-    return (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border/70 bg-card/40 p-12 text-center shadow-sm">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted/60 text-muted-foreground">
-                <Inbox className="h-7 w-7" />
-            </div>
-            <div>
-                <p className="text-lg font-semibold">No donations found</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    {hasFilters
-                        ? "Try adjusting your search or filters"
-                        : "Check back later for new donations in your area"}
-                </p>
-            </div>
-            {hasFilters && (
-                <Button variant="outline" onClick={onClearFilters}>
-                    Clear Filters
-                </Button>
-            )}
-        </div>
-    );
-}
 
 // =============================================================================
 // MAIN PAGE COMPONENT
@@ -368,19 +193,20 @@ export default function BrowseDonationsPage() {
                     </p>
                 </div>
 
-                <Button
+                <MagneticButton
                     variant="outline"
                     size="sm"
                     onClick={handleRefresh}
                     disabled={isRefreshing}
                     className="gap-2"
+                    magneticStrength={0.2}
                 >
                     <RefreshCw className={cn(
                         "h-4 w-4",
                         isRefreshing && "animate-spin"
                     )} />
                     Refresh
-                </Button>
+                </MagneticButton>
             </div>
 
             {/* Stats Bar */}
@@ -428,23 +254,12 @@ export default function BrowseDonationsPage() {
                 </div>
             </div>
 
-            {/* Content */}
-            {isLoading ? (
-                <BrowseGridSkeleton />
-            ) : filteredDonations.length === 0 ? (
-                <EmptyState hasFilters={hasFilters} onClearFilters={clearFilters} />
-            ) : (
-                <motion.div
-                    className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="show"
-                >
-                    {filteredDonations.map((donation) => (
-                        <BrowseCard key={donation.id} donation={donation} />
-                    ))}
-                </motion.div>
-            )}
+            {/* Content - Using shared DonationGrid with StaggerContainer */}
+            <DonationGrid
+                donations={filteredDonations}
+                isLoading={isLoading}
+                enableLayoutAnimation={false}
+            />
 
             {/* Results Count */}
             {!isLoading && filteredDonations.length > 0 && (

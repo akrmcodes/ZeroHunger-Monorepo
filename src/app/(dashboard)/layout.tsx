@@ -6,11 +6,11 @@ import { SkipLink } from "@/components/ui/skip-link";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     return (
-        <div className="min-h-screen bg-muted/20">
+        <div className="min-h-screen bg-muted/20 overflow-x-hidden">
             {/* Accessible skip link for keyboard users */}
             <SkipLink />
 
-            <div className="mx-auto flex w-full max-w-7xl gap-0 px-4">
+            <div className="mx-auto flex w-full max-w-7xl gap-0 px-4 overflow-x-hidden">
                 <Sidebar />
                 <div className="flex min-h-screen flex-1 flex-col">
                     <DashboardNavbar />

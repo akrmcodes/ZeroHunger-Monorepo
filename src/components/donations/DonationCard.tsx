@@ -2,9 +2,9 @@ import Link from "next/link";
 import { Coffee, MapPin, Milk, Package, Salad, Soup, Wheat } from "lucide-react";
 import { formatDistanceToNowStrict } from "date-fns";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AnimatedCard } from "@/components/ui/animated-card";
+import { MagneticButton } from "@/components/ui/magnetic-button";
 import { StatusBadge } from "@/components/donations/StatusBadge";
 import { Donation, FoodType } from "@/types/donation";
 
@@ -95,7 +95,12 @@ export function DonationCard({
                     <div className="text-xs text-muted-foreground">
                         Created {formatDistanceToNowStrict(new Date(donation.created_at), { addSuffix: true })}
                     </div>
-                    <Button asChild size="sm" variant="outline">
+                    <MagneticButton
+                        asChild
+                        size="sm"
+                        variant="outline"
+                        magneticStrength={0.25}
+                    >
                         <Link
                             href={`/donations/${donation.id}`}
                             onClick={() => onAction?.(donation.id)}
@@ -103,7 +108,7 @@ export function DonationCard({
                         >
                             {actionLabel}
                         </Link>
-                    </Button>
+                    </MagneticButton>
                 </CardFooter>
             </Card>
         </AnimatedCard>
