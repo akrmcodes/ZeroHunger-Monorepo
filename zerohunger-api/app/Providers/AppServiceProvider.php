@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\GeoService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -11,7 +12,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register GeoService as singleton
+        $this->app->singleton(GeoService::class, function ($app) {
+            return new GeoService();
+        });
     }
 
     /**
