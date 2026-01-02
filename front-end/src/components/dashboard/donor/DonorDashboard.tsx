@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Loader2 } from "lucide-react";
 import {
     Pie,
     PieChart,
@@ -10,19 +11,17 @@ import {
     Tooltip,
     type TooltipProps,
 } from "recharts";
+import { useQuery } from "@tanstack/react-query";
 
 import { ActionBanner } from "@/components/dashboard/shared/ActionBanner";
 import { ActivityList } from "@/components/dashboard/shared/ActivityList";
 import { StatCard } from "@/components/dashboard/shared/StatCard";
 import { containerVariants, itemVariants } from "@/components/dashboard/shared/variants";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-type Stat = {
-    title: string;
-    value: string;
-    helper: string;
-    accentClass: string;
-};
+import { useAuth } from "@/hooks/useAuth";
+import { api } from "@/lib/api";
+import { getImpactLevel } from "@/lib/utils/profile-simulation";
+import type { Donation } from "@/types/donation";
 
 type StatusDatum = {
     name: string;
@@ -30,28 +29,133 @@ type StatusDatum = {
     color: string;
 };
 
+// =============================================================================
+// SAFE DATA NORMALIZATION
+// =============================================================================
 
-const stats: Stat[] = [
-    { title: "Total Donations", value: "128", helper: "+12% vs last month", accentClass: "bg-emerald-100 text-emerald-800" },
-    { title: "Active Donations", value: "14", helper: "+2 this week", accentClass: "bg-blue-100 text-blue-800" },
-    { title: "Impact Score", value: "4,500", helper: "Level 5 Donor", accentClass: "bg-amber-100 text-amber-800" },
-];
+/**
+ * Safely extracts an array from API response.
+ * Handles multiple response formats:
+ * - Direct array: [...]
+ * - Wrapped: { data: [...] }
+ * - Nested: { data: { data: [...] } }
+ * @returns Always returns an array (empty if extraction fails)
+ */
+function safeArrayExtract<T>(response: unknown): T[] {
+    // Case 1: Already an array
+    if (Array.isArray(response)) {
+        return response;
+    }
 
-const statusData: StatusDatum[] = [
-    { name: "Pending", value: 8, color: "#94a3b8" },
-    { name: "Claimed", value: 5, color: "#f59e0b" },
-    { name: "Delivered", value: 12, color: "#10b981" },
-];
+    // Case 2: Response is an object with a data property
+    if (response && typeof response === 'object' && 'data' in response) {
+        const data = (response as { data: unknown }).data;
 
-const activityItems = [
-    { title: "Donated 20 kg of Apples", time: "2h ago" },
-    { title: "Claimed by Ahmed (Volunteer)", time: "4h ago" },
-    { title: "Delivered to Community Kitchen", time: "Yesterday" },
-    { title: "Donated Fresh Bread", time: "2 days ago" },
-];
+        // Case 2a: data is directly an array
+        if (Array.isArray(data)) {
+            return data;
+        }
 
-function ImpactRing() {
-    const progress = 0.78; // mock 78%
+        // Case 2b: data is wrapped again (ApiResponse wrapper from useQuery)
+        if (data && typeof data === 'object' && 'data' in data) {
+            const nestedData = (data as { data: unknown }).data;
+            if (Array.isArray(nestedData)) {
+                return nestedData;
+            }
+        }
+    }
+
+    // Fallback: return empty array to prevent crashes
+    return [];
+}
+
+// =============================================================================
+// REAL DATA COMPUTATION UTILITIES
+// =============================================================================
+
+/** Average meals per KG of food (industry standard: ~2.5 meals per kg) */
+const MEALS_PER_KG = 2.5;
+
+/**
+ * Compute REAL stats directly from the donation list.
+ * This is the Source of Truth - no heuristics, no simulation.
+ */
+function computeRealDonorStats(donations: Donation[]) {
+    const totalDonations = donations.length;
+
+    // Sum actual quantity_kg from each donation
+    const totalKgSaved = donations.reduce((sum, d) => {
+        // Handle both quantity_kg (API) and quantity (form) field names
+        const kg = (d as { quantity_kg?: number }).quantity_kg ?? d.quantity ?? 0;
+        return sum + kg;
+    }, 0);
+
+    // Calculate meals from real KG data
+    const mealsProvided = Math.round(totalKgSaved * MEALS_PER_KG);
+
+    return {
+        totalDonations,
+        totalKgSaved: Math.round(totalKgSaved * 10) / 10, // Round to 1 decimal
+        mealsProvided,
+    };
+}
+
+/**
+ * Compute status breakdown from REAL donation statuses
+ */
+function computeStatusData(donations: Donation[]): StatusDatum[] {
+    const pending = donations.filter(d =>
+        d.status === "available" || d.status === "pending"
+    ).length;
+    const claimed = donations.filter(d =>
+        d.status === "reserved" || d.status === "claimed" || d.status === "picked_up"
+    ).length;
+    const delivered = donations.filter(d =>
+        d.status === "delivered"
+    ).length;
+
+    return [
+        { name: "Pending", value: pending || 0, color: "#94a3b8" },
+        { name: "Claimed", value: claimed || 0, color: "#f59e0b" },
+        { name: "Delivered", value: delivered || 0, color: "#10b981" },
+    ];
+}
+
+/**
+ * Generate activity items from REAL recent donations
+ */
+function generateActivityFromDonations(donations: Donation[]) {
+    // Sort by created_at descending and take 5 most recent
+    const sorted = [...donations]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5);
+
+    return sorted.map(d => {
+        const date = new Date(d.created_at);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        let time: string;
+        if (diffHours < 1) time = "Just now";
+        else if (diffHours < 24) time = `${diffHours}h ago`;
+        else if (diffDays === 1) time = "Yesterday";
+        else time = `${diffDays} days ago`;
+
+        return {
+            title: `Donated: ${d.title}`,
+            time,
+        };
+    });
+}
+
+interface ImpactRingProps {
+    progress: number;
+}
+
+function ImpactRing({ progress }: ImpactRingProps) {
+    const percentage = Math.round(progress);
     return (
         <div className="relative flex h-24 w-24 items-center justify-center">
             <svg className="h-24 w-24 -rotate-90" viewBox="0 0 100 100">
@@ -63,12 +167,12 @@ function ImpactRing() {
                     className="stroke-emerald-500"
                     strokeWidth="10"
                     fill="none"
-                    strokeDasharray={`${progress * 264} 999`}
+                    strokeDasharray={`${(progress / 100) * 264} 999`}
                     strokeLinecap="round"
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-lg font-bold text-slate-900">78%</span>
+                <span className="text-lg font-bold text-slate-900">{percentage}%</span>
                 <span className="text-xs text-slate-500">to next level</span>
             </div>
         </div>
@@ -94,10 +198,94 @@ function StatusTooltip({ active, payload }: StatusTooltipProps) {
 }
 
 export function DonorDashboard() {
+    const { user } = useAuth();
+
+    // =========================================================================
+    // REAL DATA FETCHING - Source of Truth from API
+    // Endpoint: GET /my-donations (returns all donations by current donor)
+    // =========================================================================
+    const {
+        data: donationsResponse,
+        isLoading,
+        isError,
+    } = useQuery({
+        queryKey: ["my-donations", user?.id],
+        queryFn: () => api.donations.myDonations(),
+        enabled: !!user,
+        staleTime: 30 * 1000, // 30 seconds
+    });
+
+    // =========================================================================
+    // SAFE ARRAY EXTRACTION - Defensive coding to prevent crashes
+    // Handles: direct array, { data: [...] }, or { data: { data: [...] } }
+    // =========================================================================
+    const donations = useMemo(() => {
+        return safeArrayExtract<Donation>(donationsResponse);
+    }, [donationsResponse]);
+
+    // Compute REAL stats from actual data (only when we have a safe array)
+    const realStats = useMemo(() => {
+        return computeRealDonorStats(donations);
+    }, [donations]);
+
+    const impactLevel = useMemo(() => {
+        return getImpactLevel(user?.impact_score ?? 0);
+    }, [user?.impact_score]);
+
+    // Compute status breakdown from REAL donation statuses
+    const statusData = useMemo(() => {
+        return computeStatusData(donations);
+    }, [donations]);
+
+    // Generate activity from REAL recent donations
+    const activityItems = useMemo(() => {
+        return generateActivityFromDonations(donations);
+    }, [donations]);
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+                <span className="ml-2 text-slate-600">Loading your donations...</span>
+            </div>
+        );
+    }
+
+    // Error state
+    if (isError) {
+        return (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+                Failed to load donation data. Please try refreshing.
+            </div>
+        );
+    }
+
+    const displayStats = [
+        {
+            title: "Total Donations",
+            value: realStats.totalDonations.toString(),
+            helper: `${realStats.mealsProvided} meals provided`,
+            accentClass: "bg-emerald-100 text-emerald-800",
+        },
+        {
+            title: "Food Saved",
+            value: `${realStats.totalKgSaved} kg`,
+            helper: "From going to waste",
+            accentClass: "bg-blue-100 text-blue-800",
+        },
+        {
+            title: "Impact Score",
+            value: (user?.impact_score ?? 0).toLocaleString(),
+            helper: `${impactLevel.level} • Level ${impactLevel.tier}`,
+            accentClass: "bg-amber-100 text-amber-800",
+        },
+    ];
+
     return (
         <motion.div initial="hidden" animate="show" variants={containerVariants} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {stats.map((stat) => {
+                {displayStats.map((stat) => {
                     const isImpact = stat.title === "Impact Score";
                     return (
                         <motion.div key={stat.title} variants={itemVariants}>
@@ -107,7 +295,7 @@ export function DonorDashboard() {
                                 helper={isImpact ? stat.helper : undefined}
                                 badgeText={!isImpact ? stat.helper : undefined}
                                 badgeClassName={!isImpact ? stat.accentClass : undefined}
-                                endAddon={isImpact ? <ImpactRing /> : undefined}
+                                endAddon={isImpact ? <ImpactRing progress={impactLevel.progress} /> : undefined}
                                 tone="emerald"
                             />
                         </motion.div>

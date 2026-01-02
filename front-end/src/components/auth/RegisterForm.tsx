@@ -2,7 +2,9 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, type Variants } from "framer-motion";
-import { HeartHandshake, Users, HandHeart } from "lucide-react";
+import { HeartHandshake, Users, HandHeart, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import type { Route } from "next";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -195,6 +197,26 @@ export function RegisterForm() {
                             <Button type="submit" className="w-full h-11" disabled={submitting}>
                                 {submitting ? "Creating account..." : "Create Account"}
                             </Button>
+                        </motion.div>
+                    </motion.div>
+
+                    <motion.div variants={itemVariants} className="flex items-center gap-3 text-sm text-muted-foreground">
+                        <div className="h-px flex-1 bg-border" />
+                        <span>Already a member?</span>
+                        <div className="h-px flex-1 bg-border" />
+                    </motion.div>
+
+                    <motion.div variants={itemVariants}>
+                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                            <Link href={"/login" as Route}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full h-11 gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                                >
+                                    Sign In <ArrowRight className="h-4 w-4" />
+                                </Button>
+                            </Link>
                         </motion.div>
                     </motion.div>
                 </motion.form>

@@ -1,7 +1,8 @@
 "use client";
 
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle, MapPin, Navigation, Scale, Search } from "lucide-react";
+import { CheckCircle, Loader2, MapPin, Navigation, Scale, Search } from "lucide-react";
 import {
     Bar,
     BarChart,
@@ -11,28 +12,126 @@ import {
     YAxis,
     type TooltipProps,
 } from "recharts";
+import { useQuery } from "@tanstack/react-query";
 
 import { ActionBanner } from "@/components/dashboard/shared/ActionBanner";
 import { StatCard } from "@/components/dashboard/shared/StatCard";
 import { containerVariants, itemVariants } from "@/components/dashboard/shared/variants";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/useAuth";
+import { api, type Claim } from "@/lib/api";
 
-const stats = [
-    { title: "Active Claims", value: "3", helper: "2 pickups today", icon: MapPin, accent: "text-blue-700 bg-blue-100" },
-    { title: "Completed Deliveries", value: "128", helper: "+6 this week", icon: CheckCircle, accent: "text-emerald-700 bg-emerald-100" },
-    { title: "Total Impact", value: "6,450 kg", helper: "Food saved", icon: Scale, accent: "text-indigo-700 bg-indigo-100" },
-];
+// =============================================================================
+// SAFE DATA NORMALIZATION
+// =============================================================================
 
-const weeklyData = [
-    { day: "Mon", deliveries: 4 },
-    { day: "Tue", deliveries: 6 },
-    { day: "Wed", deliveries: 5 },
-    { day: "Thu", deliveries: 7 },
-    { day: "Fri", deliveries: 3 },
-    { day: "Sat", deliveries: 8 },
-    { day: "Sun", deliveries: 4 },
-];
+/**
+ * Safely extracts an array from API response.
+ * Handles multiple response formats:
+ * - Direct array: [...]
+ * - Wrapped: { data: [...] }
+ * - Nested: { data: { data: [...] } }
+ * @returns Always returns an array (empty if extraction fails)
+ */
+function safeArrayExtract<T>(response: unknown): T[] {
+    // Case 1: Already an array
+    if (Array.isArray(response)) {
+        return response;
+    }
+
+    // Case 2: Response is an object with a data property
+    if (response && typeof response === 'object' && 'data' in response) {
+        const data = (response as { data: unknown }).data;
+
+        // Case 2a: data is directly an array
+        if (Array.isArray(data)) {
+            return data;
+        }
+
+        // Case 2b: data is wrapped again (ApiResponse wrapper from useQuery)
+        if (data && typeof data === 'object' && 'data' in data) {
+            const nestedData = (data as { data: unknown }).data;
+            if (Array.isArray(nestedData)) {
+                return nestedData;
+            }
+        }
+    }
+
+    // Fallback: return empty array to prevent crashes
+    return [];
+}
+
+// =============================================================================
+// REAL DATA COMPUTATION UTILITIES
+// =============================================================================
+
+/**
+ * Compute REAL stats directly from the claims list.
+ * This is the Source of Truth - no heuristics, no simulation.
+ */
+function computeRealVolunteerStats(claims: Claim[]) {
+    // Active claims: status is "active" or "picked_up" (not yet delivered)
+    const activeClaims = claims.filter(c =>
+        c.status === "active" || c.status === "picked_up"
+    );
+
+    // Completed deliveries: status is "delivered"
+    const completedDeliveries = claims.filter(c => c.status === "delivered");
+
+    // Calculate total KG delivered from real donation data
+    const totalKgDelivered = completedDeliveries.reduce((sum, c) => {
+        const kg = (c.donation as { quantity_kg?: number })?.quantity_kg ??
+            c.donation?.quantity ?? 0;
+        return sum + kg;
+    }, 0);
+
+    return {
+        activeClaims: activeClaims.length,
+        completedDeliveries: completedDeliveries.length,
+        totalKgDelivered: Math.round(totalKgDelivered * 10) / 10,
+        // Get the first active claim for current mission
+        currentMission: activeClaims[0] ?? null,
+    };
+}
+
+/**
+ * Compute REAL weekly activity from delivered claims with timestamps
+ */
+function computeWeeklyData(claims: Claim[]) {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Filter to delivered claims from the last 7 days
+    const recentDeliveries = claims.filter(c => {
+        if (c.status !== "delivered" || !c.delivered_at) return false;
+        const deliveredDate = new Date(c.delivered_at);
+        return deliveredDate >= oneWeekAgo;
+    });
+
+    // Group by day of week
+    const dayMap: Record<string, number> = {
+        Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0,
+    };
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+    recentDeliveries.forEach(c => {
+        if (c.delivered_at) {
+            const day = dayNames[new Date(c.delivered_at).getDay()];
+            dayMap[day]++;
+        }
+    });
+
+    return [
+        { day: "Mon", deliveries: dayMap.Mon },
+        { day: "Tue", deliveries: dayMap.Tue },
+        { day: "Wed", deliveries: dayMap.Wed },
+        { day: "Thu", deliveries: dayMap.Thu },
+        { day: "Fri", deliveries: dayMap.Fri },
+        { day: "Sat", deliveries: dayMap.Sat },
+        { day: "Sun", deliveries: dayMap.Sun },
+    ];
+}
 
 type StatusTooltipProps = TooltipProps<number, string> & {
     payload?: Array<{ payload?: { day?: string; deliveries?: number } }>;
@@ -53,17 +152,98 @@ function StatusTooltip({ active, payload }: StatusTooltipProps) {
 }
 
 export function VolunteerDashboard() {
-    const hasActiveMission = true;
-    const mission = {
-        pickup: "Sunrise Bakery",
-        dropoff: "Hope Shelter",
-        eta: "18 mins",
-    };
+    const { user } = useAuth();
+
+    // =========================================================================
+    // REAL DATA FETCHING - Source of Truth from API
+    // Endpoint: GET /claims (returns all claims by current volunteer)
+    // =========================================================================
+    const {
+        data: claimsResponse,
+        isLoading,
+        isError,
+    } = useQuery({
+        queryKey: ["my-claims", user?.id],
+        queryFn: () => api.claims.list(),
+        enabled: !!user,
+        staleTime: 30 * 1000, // 30 seconds
+    });
+
+    // =========================================================================
+    // SAFE ARRAY EXTRACTION - Defensive coding to prevent crashes
+    // Handles: direct array, { data: [...] }, or { data: { data: [...] } }
+    // =========================================================================
+    const claims = useMemo(() => {
+        return safeArrayExtract<Claim>(claimsResponse);
+    }, [claimsResponse]);
+
+    // Compute REAL stats from actual data (only when we have a safe array)
+    const realStats = useMemo(() => {
+        return computeRealVolunteerStats(claims);
+    }, [claims]);
+
+    // Compute REAL weekly activity from delivered claims
+    const weeklyData = useMemo(() => {
+        return computeWeeklyData(claims);
+    }, [claims]);
+
+    const thisWeekDeliveries = weeklyData.reduce((sum, d) => sum + d.deliveries, 0);
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="flex h-64 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <span className="ml-2 text-slate-600">Loading your deliveries...</span>
+            </div>
+        );
+    }
+
+    // Error state
+    if (isError) {
+        return (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+                Failed to load delivery data. Please try refreshing.
+            </div>
+        );
+    }
+
+    const displayStats = [
+        {
+            title: "Active Claims",
+            value: realStats.activeClaims.toString(),
+            helper: `${Math.min(realStats.activeClaims, 2)} pickups pending`,
+            icon: MapPin,
+            accent: "text-blue-700 bg-blue-100",
+        },
+        {
+            title: "Completed Deliveries",
+            value: realStats.completedDeliveries.toString(),
+            helper: `+${thisWeekDeliveries} this week`,
+            icon: CheckCircle,
+            accent: "text-emerald-700 bg-emerald-100",
+        },
+        {
+            title: "Total Impact",
+            value: `${realStats.totalKgDelivered} kg`,
+            helper: `${claims.length} total claims`,
+            icon: Scale,
+            accent: "text-indigo-700 bg-indigo-100",
+        },
+    ];
+
+    const hasActiveMission = realStats.currentMission !== null;
+    const mission = realStats.currentMission ? {
+        pickup: realStats.currentMission.donation?.title ?? "Pickup Location",
+        dropoff: "Recipient Location",
+        eta: "Awaiting pickup",
+        claimId: realStats.currentMission.id,
+    } : null;
 
     return (
         <motion.div initial="hidden" animate="show" variants={containerVariants} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {stats.map((stat) => (
+                {displayStats.map((stat) => (
                     <motion.div key={stat.title} variants={itemVariants}>
                         <StatCard
                             title={stat.title}
@@ -84,7 +264,7 @@ export function VolunteerDashboard() {
                             <CardTitle>Current Mission</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            {hasActiveMission ? (
+                            {hasActiveMission && mission ? (
                                 <div className="rounded-xl border border-blue-100 bg-white/90 p-4 shadow-sm">
                                     <div className="flex flex-col gap-2 text-slate-800">
                                         <div className="flex items-center gap-2">

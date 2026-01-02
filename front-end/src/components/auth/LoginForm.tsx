@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, type Variants } from "framer-motion";
-import { Github, Chrome } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import type { Route } from "next";
 import { useState } from "react";
@@ -115,20 +115,21 @@ export function LoginForm() {
 
                     <motion.div variants={itemVariants} className="flex items-center gap-3 text-sm text-muted-foreground">
                         <div className="h-px flex-1 bg-border" />
-                        <span>Or continue with</span>
+                        <span>New to ZeroHunger?</span>
                         <div className="h-px flex-1 bg-border" />
                     </motion.div>
 
-                    <motion.div variants={itemVariants} className="grid gap-3 sm:grid-cols-2">
+                    <motion.div variants={itemVariants}>
                         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button type="button" variant="outline" className="w-full h-11 gap-2">
-                                <Chrome className="h-4 w-4" /> Google
-                            </Button>
-                        </motion.div>
-                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                            <Button type="button" variant="outline" className="w-full h-11 gap-2">
-                                <Github className="h-4 w-4" /> GitHub
-                            </Button>
+                            <Link href={"/register" as Route}>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="w-full h-11 gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
+                                >
+                                    Join the Movement <ArrowRight className="h-4 w-4" />
+                                </Button>
+                            </Link>
                         </motion.div>
                     </motion.div>
                 </motion.form>
