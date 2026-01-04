@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "@/components/donations/StatusBadge";
 import { cn } from "@/lib/utils";
+import { formatFoodType, formatQuantity } from "@/lib/utils/formatters";
 import { Claim } from "@/types/claim";
 import { Donation, DonationStatus } from "@/types/donation";
 
@@ -145,7 +146,9 @@ export function ClaimCard({ claim, index = 0, onStatusChange }: ClaimCardProps) 
                             <CardTitle className="text-base font-semibold leading-tight line-clamp-1">
                                 {donation?.title ?? "Donation"}
                             </CardTitle>
-                            <p className="text-xs text-muted-foreground">Claim #{claim.id}</p>
+                            <p className="text-xs text-muted-foreground">
+                                {formatQuantity(donation?.quantity)} • {formatFoodType(donation?.food_type)}
+                            </p>
                         </div>
                         <StatusBadge status={badgeStatus} />
                     </div>

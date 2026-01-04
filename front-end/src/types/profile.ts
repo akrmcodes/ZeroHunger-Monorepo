@@ -42,6 +42,14 @@ export interface UserStats {
 // Zod Schemas
 // =============================================================================
 
+/**
+ * Profile Form Schema
+ * 
+ * CRITICAL NOTES:
+ * - phone: Can be empty string or valid phone. Using .optional().transform() for null handling.
+ * - latitude/longitude: Must accept null from API and number from form input.
+ *   Using .preprocess() to handle string-to-number coercion from form inputs.
+ */
 export const profileSchema = z.object({
     name: z
         .string()
@@ -51,19 +59,16 @@ export const profileSchema = z.object({
         .string()
         .regex(/^[+]?[\d\s-()]{7,20}$/, "Please enter a valid phone number")
         .or(z.literal(""))
-        .default(""),
-    latitude: z
-        .number()
-        .min(-90, "Invalid latitude")
-        .max(90, "Invalid latitude")
-        .nullable()
-        .optional(),
-    longitude: z
-        .number()
-        .min(-180, "Invalid longitude")
-        .max(180, "Invalid longitude")
-        .nullable()
-        .optional(),
+        .optional()
+        .transform((val) => val || ""),
+    latitude: z.preprocess(
+        (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+        z.number().min(-90, "Invalid latitude").max(90, "Invalid latitude").nullable()
+    ),
+    longitude: z.preprocess(
+        (val) => (val === "" || val === null || val === undefined ? null : Number(val)),
+        z.number().min(-180, "Invalid longitude").max(180, "Invalid longitude").nullable()
+    ),
 });
 
 export type ProfileFormValues = z.infer<typeof profileSchema>;

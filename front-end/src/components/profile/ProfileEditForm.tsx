@@ -125,23 +125,30 @@ export function ProfileEditForm({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
-    // Form setup with input and output types
+    // ==========================================================================
+    // FORM SETUP
+    // CRITICAL: defaultValues must match what Zod expects after preprocessing
+    // - name: string (required)
+    // - phone: string (optional, default "")  
+    // - latitude/longitude: number | null (preprocessed from any input)
+    // ==========================================================================
     const form = useForm<ProfileFormInput, undefined, ProfileFormValues>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
-            name: user.name || "",
-            phone: user.phone || "",
+            name: user.name ?? "",
+            phone: user.phone ?? "",
             latitude: user.latitude ?? null,
             longitude: user.longitude ?? null,
         },
+        mode: "onBlur", // Validate on blur to catch issues early
     });
 
     // Reset form when user changes or sheet opens
     useEffect(() => {
         if (open) {
             form.reset({
-                name: user.name || "",
-                phone: user.phone || "",
+                name: user.name ?? "",
+                phone: user.phone ?? "",
                 latitude: user.latitude ?? null,
                 longitude: user.longitude ?? null,
             });
@@ -151,23 +158,39 @@ export function ProfileEditForm({
     // Handle location change from LocationPicker
     const handleLocationChange = useCallback(
         (coords: GeoCoordinates) => {
-            form.setValue("latitude", coords.latitude, { shouldValidate: true });
-            form.setValue("longitude", coords.longitude, { shouldValidate: true });
+            // Ensure we're setting actual numbers
+            form.setValue("latitude", coords.latitude, { shouldValidate: true, shouldDirty: true });
+            form.setValue("longitude", coords.longitude, { shouldValidate: true, shouldDirty: true });
         },
         [form]
     );
 
-    // Form submission
+    // Handle validation errors - ENHANCED debugging
+    const onInvalid = (errors: Record<string, unknown>) => {
+        console.error("🚨 Form validation failed:", JSON.stringify(errors, null, 2));
+        console.log("📋 Current form values:", form.getValues());
+        console.log("📋 Form state:", {
+            isDirty: form.formState.isDirty,
+            isValid: form.formState.isValid,
+            errors: form.formState.errors,
+        });
+    };
+
+    // Form submission - with explicit type safety
     const onSubmit = async (values: ProfileFormValues) => {
+        console.log("✅ Form validated successfully, values:", values);
         setIsSubmitting(true);
 
         try {
-            const response = await api.profile.update({
+            // Build payload with proper type handling
+            const payload = {
                 name: values.name,
                 phone: values.phone || undefined,
-                latitude: values.latitude ?? undefined,
-                longitude: values.longitude ?? undefined,
-            });
+                latitude: values.latitude != null ? Number(values.latitude) : undefined,
+                longitude: values.longitude != null ? Number(values.longitude) : undefined,
+            };
+
+            const response = await api.profile.update(payload);
 
             // Show success animation
             setShowSuccess(true);
@@ -190,9 +213,9 @@ export function ProfileEditForm({
         }
     };
 
-    // Watch form values for location
-    const latitude = form.watch("latitude");
-    const longitude = form.watch("longitude");
+    // Watch form values for location - explicit typing to avoid TypeScript inference issues
+    const latitude = form.watch("latitude") as number | null | undefined;
+    const longitude = form.watch("longitude") as number | null | undefined;
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -245,7 +268,7 @@ export function ProfileEditForm({
                 </AnimatePresence>
 
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
                         <motion.div
                             variants={formVariants}
                             initial="hidden"

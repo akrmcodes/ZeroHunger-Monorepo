@@ -8,14 +8,11 @@ import { useFormContext } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DonationFormValues } from "@/lib/validators/donation";
-import { FoodType, FOOD_TYPE_LABELS } from "@/types/donation";
+import { formatFoodType } from "@/lib/utils/formatters";
 
 interface StepThreeReviewProps {
     onBack: () => void;
 }
-
-// Use the centralized labels from donation types
-const foodTypeLabel = FOOD_TYPE_LABELS;
 
 export function StepThreeReview({ onBack }: StepThreeReviewProps) {
     const form = useFormContext<DonationFormValues>();
@@ -45,7 +42,7 @@ export function StepThreeReview({ onBack }: StepThreeReviewProps) {
                         </div>
                         <div className="flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
                             <UtensilsCrossed className="h-4 w-4" aria-hidden />
-                            {foodTypeLabel[values.food_type] ?? "Food"}
+                            {formatFoodType(values.food_type)}
                         </div>
                     </div>
 

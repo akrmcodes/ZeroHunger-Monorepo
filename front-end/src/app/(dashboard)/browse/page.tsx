@@ -111,42 +111,47 @@ export default function BrowseDonationsPage() {
     }, [fetchDonations]);
 
     // -------------------------------------------------------------------------
-    // FILTERING
+    // FILTERING - DERIVED STATE PATTERN
+    // Source: `donations` (immutable from API)
+    // Filter: `filterTab` + `searchQuery`
+    // Result: `filteredDonations` (computed view)
     // -------------------------------------------------------------------------
 
     const filteredDonations = useMemo(() => {
+        // IMPORTANT: Always start from the FULL source array
+        let result = [...donations];
+
+        // Step 1: Apply status filter (only if not "all")
+        if (filterTab !== "all") {
+            result = result.filter((donation) => {
+                const status = String(donation.status).toLowerCase();
+
+                // Map backend statuses to categories
+                const isAvailableStatus = ["pending", "available"].includes(status);
+                const isClaimedStatus = ["claimed", "reserved", "picked_up"].includes(status);
+
+                if (filterTab === "pending") {
+                    return isAvailableStatus;
+                } else if (filterTab === "claimed") {
+                    return isClaimedStatus;
+                }
+
+                return true; // Should not reach here, but be safe
+            });
+        }
+
+        // Step 2: Apply search filter (only if query is not empty)
         const normalized = searchQuery.trim().toLowerCase();
+        if (normalized) {
+            result = result.filter((donation) => {
+                const matchesTitle = donation.title?.toLowerCase().includes(normalized) ?? false;
+                const matchesAddress = donation.pickup_address?.toLowerCase().includes(normalized) ?? false;
+                const matchesFoodType = donation.food_type?.toLowerCase().includes(normalized) ?? false;
+                return matchesTitle || matchesAddress || matchesFoodType;
+            });
+        }
 
-        return donations.filter((donation) => {
-            // Status filter
-            // IMPORTANT: Backend uses 'available' / 'reserved' while frontend uses 'pending' / 'claimed'
-            // We must accept BOTH naming conventions
-            const status = String(donation.status).toLowerCase();
-
-            // Map backend statuses to categories
-            const isAvailableStatus = ["pending", "available"].includes(status);
-            const isClaimedStatus = ["claimed", "reserved", "picked_up"].includes(status);
-
-            if (filterTab === "pending") {
-                // "Ready to Claim" = pending OR available
-                if (!isAvailableStatus) return false;
-            } else if (filterTab === "claimed") {
-                // "In Progress" = claimed, reserved, or picked_up
-                if (!isClaimedStatus) return false;
-            } else if (filterTab === "all") {
-                // Show all active workflow items (exclude delivered, expired, cancelled)
-                if (!isAvailableStatus && !isClaimedStatus) return false;
-            }
-
-            // Search filter
-            if (normalized) {
-                const matchesTitle = donation.title.toLowerCase().includes(normalized);
-                const matchesAddress = donation.pickup_address?.toLowerCase().includes(normalized);
-                return matchesTitle || matchesAddress;
-            }
-
-            return true;
-        });
+        return result;
     }, [donations, filterTab, searchQuery]);
 
     const hasFilters = searchQuery.trim() !== "" || filterTab !== "all";
@@ -157,7 +162,7 @@ export default function BrowseDonationsPage() {
     }, []);
 
     // -------------------------------------------------------------------------
-    // STATS
+    // STATS - Computed from source data (not filtered)
     // -------------------------------------------------------------------------
 
     const stats = useMemo(() => {
@@ -173,7 +178,8 @@ export default function BrowseDonationsPage() {
             return ["claimed", "reserved", "picked_up"].includes(status);
         }).length;
 
-        return { pending, claimed, total: pending + claimed };
+        // Total is ALL donations from API, not just filtered ones
+        return { pending, claimed, total: donations.length };
     }, [donations]);
 
     // -------------------------------------------------------------------------

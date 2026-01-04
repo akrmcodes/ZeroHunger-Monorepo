@@ -20,9 +20,9 @@ import {
     Donation,
     DonationStatus,
     FoodType,
-    FOOD_TYPE_LABELS,
     isDonationAvailable,
 } from "@/types/donation";
+import { formatFoodType } from "@/lib/utils/formatters";
 
 // =============================================================================
 // VIEW TYPES
@@ -193,12 +193,7 @@ export default function DonationDetailPage() {
     // -------------------------------------------------------------------------
 
     const foodTypeLabel = useMemo(() => {
-        if (!donation?.food_type) return "Unknown";
-
-        // Handle enum value
-        const foodType = donation.food_type as FoodType;
-        return FOOD_TYPE_LABELS[foodType] ??
-            String(donation.food_type).replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+        return formatFoodType(donation?.food_type);
     }, [donation]);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

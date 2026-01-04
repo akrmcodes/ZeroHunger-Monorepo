@@ -7,6 +7,7 @@ import { AnimatedCard } from "@/components/ui/animated-card";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { StatusBadge } from "@/components/donations/StatusBadge";
 import { Donation, FoodType } from "@/types/donation";
+import { formatFoodType } from "@/lib/utils/formatters";
 
 interface DonationCardProps {
     donation: Donation;
@@ -70,7 +71,7 @@ export function DonationCard({
                             <CardTitle className="line-clamp-1 text-base font-semibold leading-tight">
                                 {donation.title}
                             </CardTitle>
-                            <p className="text-xs text-muted-foreground">{donation.quantity} kg • {donation.food_type}</p>
+                            <p className="text-xs text-muted-foreground">{donation.quantity} kg • {formatFoodType(donation.food_type)}</p>
                         </div>
                     </div>
                     <StatusBadge status={donation.status} />
