@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import {
     MapPin,
     List,
@@ -12,10 +13,12 @@ import {
     Navigation,
     AlertCircle,
     Loader2,
+    UserCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import { api } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import { useGeolocation, formatDistance, calculateDistance } from "@/hooks/useGeolocation";
 import type { Donation } from "@/types/donation";
 
@@ -109,17 +112,45 @@ function LocationStatus({
     isLoading,
     error,
     onRefresh,
+    hasProfileLocation,
 }: {
     isDefault: boolean;
     isLoading: boolean;
     error: string | null;
     onRefresh: () => void;
+    hasProfileLocation: boolean;
 }) {
     if (isLoading) {
         return (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 <span>Detecting your location...</span>
+            </div>
+        );
+    }
+
+    // User has a saved location in their profile - highest priority
+    if (hasProfileLocation) {
+        return (
+            <div className="flex items-center gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg text-sm">
+                <UserCircle className="h-5 w-5 text-blue-600 shrink-0" />
+                <div className="flex-1 min-w-0">
+                    <p className="font-medium text-blue-800 dark:text-blue-200">
+                        Using your saved location
+                    </p>
+                    <p className="text-blue-600 dark:text-blue-400 text-xs truncate">
+                        Showing donations near your registered location.
+                    </p>
+                </div>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={onRefresh}
+                    className="gap-1.5 border-blue-300 shrink-0"
+                >
+                    <Navigation className="h-4 w-4" />
+                    <span className="hidden sm:inline">Use GPS</span>
+                </Button>
             </div>
         );
     }
@@ -152,7 +183,7 @@ function LocationStatus({
     return (
         <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span>Using your current location</span>
+            <span>Using your current GPS location</span>
             <Button
                 variant="ghost"
                 size="sm"
@@ -248,22 +279,51 @@ function DonationListView({
 
 export default function NearbyDonationsPage() {
     const router = useRouter();
+    const { user } = useAuth();
 
     // View state
     const [viewMode, setViewMode] = useState<ViewMode>("map");
     const [radius, setRadius] = useState(DEFAULT_RADIUS);
+    const [useGpsOverride, setUseGpsOverride] = useState(false);
+
+    // Check if user has a saved location in their profile
+    const hasProfileLocation = user?.latitude != null && user?.longitude != null;
 
     // Geolocation with smart fallback
     const {
-        coordinates,
+        coordinates: gpsCoordinates,
         isLoading: isLocating,
         error: locationError,
-        isDefault: isUsingDefault,
-        refresh: refreshLocation,
+        isDefault: isGpsDefault,
+        refresh: refreshGps,
     } = useGeolocation({
-        autoFetch: true,
-        timeout: 3000, // 3 second timeout as specified
+        // Only auto-fetch GPS if no profile location OR user explicitly wants GPS
+        autoFetch: !hasProfileLocation || useGpsOverride,
+        timeout: 3000,
+        // Use profile location as fallback if available
+        fallbackLocation: hasProfileLocation
+            ? { latitude: user!.latitude!, longitude: user!.longitude! }
+            : undefined,
     });
+
+    // Determine effective coordinates: prefer profile location unless GPS override is active
+    const effectiveCoordinates = useMemo(() => {
+        if (hasProfileLocation && !useGpsOverride) {
+            return { latitude: user!.latitude!, longitude: user!.longitude! };
+        }
+        return gpsCoordinates;
+    }, [hasProfileLocation, useGpsOverride, user, gpsCoordinates]);
+
+    // Determine if we're using the system default (not profile, not real GPS)
+    const isUsingDefault = !hasProfileLocation && isGpsDefault && !useGpsOverride;
+
+    // Handle refresh - if using profile location, switch to GPS mode
+    const refreshLocation = useCallback(async () => {
+        if (hasProfileLocation && !useGpsOverride) {
+            setUseGpsOverride(true);
+        }
+        await refreshGps();
+    }, [hasProfileLocation, useGpsOverride, refreshGps]);
 
     // Fetch nearby donations
     const {
@@ -275,21 +335,22 @@ export default function NearbyDonationsPage() {
         queryKey: [
             "donations",
             "nearby",
-            coordinates.latitude,
-            coordinates.longitude,
+            effectiveCoordinates.latitude,
+            effectiveCoordinates.longitude,
             radius,
         ],
         queryFn: async () => {
             console.log('🔍 [NearbyDonations] Fetching with coords:', {
-                latitude: coordinates.latitude,
-                longitude: coordinates.longitude,
+                latitude: effectiveCoordinates.latitude,
+                longitude: effectiveCoordinates.longitude,
                 radius,
+                source: hasProfileLocation && !useGpsOverride ? 'profile' : 'gps',
             });
 
             try {
                 const response = await api.donations.nearby(
-                    coordinates.latitude,
-                    coordinates.longitude,
+                    effectiveCoordinates.latitude,
+                    effectiveCoordinates.longitude,
                     radius
                 );
 
@@ -329,8 +390,8 @@ export default function NearbyDonationsPage() {
                 throw err;
             }
         },
-        // Don't fetch while still locating
-        enabled: !isLocating,
+        // Don't fetch while still locating (unless we have profile location)
+        enabled: hasProfileLocation || !isLocating,
         staleTime: 30000, // Cache for 30 seconds
         refetchOnWindowFocus: false,
     });
@@ -342,13 +403,13 @@ export default function NearbyDonationsPage() {
         return donationsResponse
             .map((donation) => ({
                 ...donation,
-                distance: calculateDistance(coordinates, {
+                distance: calculateDistance(effectiveCoordinates, {
                     latitude: donation.latitude,
                     longitude: donation.longitude,
                 }),
             }))
             .sort((a, b) => a.distance - b.distance); // Sort by nearest first
-    }, [donationsResponse, coordinates]);
+    }, [donationsResponse, effectiveCoordinates]);
 
     // Handle donation click
     const handleDonationClick = useCallback(
@@ -396,10 +457,31 @@ export default function NearbyDonationsPage() {
             {/* Location Status */}
             <LocationStatus
                 isDefault={isUsingDefault}
-                isLoading={isLocating}
+                isLoading={isLocating && !hasProfileLocation}
                 error={locationError}
                 onRefresh={refreshLocation}
+                hasProfileLocation={hasProfileLocation && !useGpsOverride}
             />
+
+            {/* Prompt to register location if not set */}
+            {!hasProfileLocation && !isLocating && (
+                <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+                    <CardContent className="p-4 flex items-center gap-4">
+                        <MapPin className="h-8 w-8 text-blue-600 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                            <p className="font-medium text-blue-900 dark:text-blue-100">
+                                Register your location for better results
+                            </p>
+                            <p className="text-sm text-blue-700 dark:text-blue-300">
+                                Set your default location in your profile to see donations near you every time.
+                            </p>
+                        </div>
+                        <Button asChild className="shrink-0 bg-blue-600 hover:bg-blue-700">
+                            <Link href="/profile">Edit Profile</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Controls Row */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -457,7 +539,7 @@ export default function NearbyDonationsPage() {
                             <CardContent className="p-0">
                                 <DonationMap
                                     donations={sortedDonations}
-                                    userLocation={coordinates}
+                                    userLocation={effectiveCoordinates}
                                     height="500px"
                                     onDonationClick={handleDonationClick}
                                     showDistance={true}
