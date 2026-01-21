@@ -113,12 +113,14 @@ function computeWeeklyData(claims: Claim[]) {
     const dayMap: Record<string, number> = {
         Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0,
     };
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayNames: string[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     recentDeliveries.forEach(c => {
         if (c.delivered_at) {
             const day = dayNames[new Date(c.delivered_at).getDay()];
-            dayMap[day]++;
+            if (day && day in dayMap) {
+                dayMap[day]!++;
+            }
         }
     });
 
@@ -187,7 +189,7 @@ export function VolunteerDashboard() {
         return computeWeeklyData(claims);
     }, [claims]);
 
-    const thisWeekDeliveries = weeklyData.reduce((sum, d) => sum + d.deliveries, 0);
+    const thisWeekDeliveries = weeklyData.reduce((sum, d) => sum + (d.deliveries ?? 0), 0);
 
     // Loading state
     if (isLoading) {

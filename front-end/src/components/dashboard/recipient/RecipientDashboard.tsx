@@ -102,13 +102,17 @@ function computeMealsData(donations: Donation[]) {
     const dayMap: Record<string, number> = {
         Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0,
     };
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayNames: string[] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
     donations.forEach(d => {
-        const day = dayNames[new Date(d.created_at).getDay()];
+        const dayIndex = new Date(d.created_at).getDay();
+        const day = dayNames[dayIndex];
+        if (!day) return;
         const kg = (d as { quantity_kg?: number }).quantity_kg ?? d.quantity ?? 0;
         const meals = Math.round(kg * MEALS_PER_KG);
-        dayMap[day] += meals;
+        if (day in dayMap) {
+            dayMap[day]! += meals;
+        }
     });
 
     return [
