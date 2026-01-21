@@ -51,6 +51,12 @@ export default function Page() {
 
     const onSubmit = async (data: DonationFormValues) => {
         try {
+            // Validate coordinates are set (not default 0,0)
+            if (!data.latitude || !data.longitude || (data.latitude === 0 && data.longitude === 0)) {
+                toast.error("Please select a pickup location on the map");
+                return;
+            }
+
             await api.donations.create({
                 title: data.title,
                 description: data.description,
@@ -58,8 +64,8 @@ export default function Page() {
                 quantity: data.quantity,
                 expires_at: data.expires_at,
                 pickup_address: data.pickup_address,
-                latitude: 0,
-                longitude: 0,
+                latitude: data.latitude,
+                longitude: data.longitude,
             });
             toast.success("Donation created successfully!");
             addNotification(
