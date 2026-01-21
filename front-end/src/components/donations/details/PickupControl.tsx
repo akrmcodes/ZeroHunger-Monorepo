@@ -38,21 +38,18 @@ export function PickupControl({ donation }: PickupControlProps) {
     }, [expiresAt]);
 
     const pickupCode = useMemo(() => {
-        const claimPickupCode =
-            donation.claim && "pickup_code" in donation.claim
-                ? (donation.claim as { pickup_code?: string | number }).pickup_code
-                : undefined;
+        // Priority: donation.pickup_code (directly from backend)
+        // The pickup_code should be set when the donation is claimed
+        const codeCandidate = donation.pickup_code;
 
-        const codeCandidate = [
-            claimPickupCode,
-            donation.pickup_code,
-            donation.claim?.id,
-            donation.id,
-        ].find((value) => value !== null && value !== undefined);
-
-        const normalizedCode = String(codeCandidate ?? donation.id);
-        return normalizedCode.slice(-6).padStart(6, "0");
-    }, [donation.claim, donation.pickup_code, donation.id]);
+        // If we have a valid code, use it
+        if (codeCandidate) {
+            return String(codeCandidate).padStart(6, "0");
+        }
+        
+        // Fallback: This should not happen if backend is working correctly
+        return "------";
+    }, [donation.pickup_code]);
 
     const handleNavigate = () => {
         const lat = donation.latitude;
