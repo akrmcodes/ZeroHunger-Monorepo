@@ -1,15 +1,19 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import LoginForm from "@/components/auth/LoginForm";
 
-const pageVariants = {
+const pageVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
         opacity: 1,
         y: 0,
-        transition: { duration: 0.5, ease: "easeOut" },
     },
+};
+
+const pageTransition = {
+    duration: 0.5,
+    ease: "easeOut" as const,
 };
 
 export default function LoginPage() {
@@ -18,6 +22,7 @@ export default function LoginPage() {
             initial="hidden"
             animate="visible"
             variants={pageVariants}
+            transition={pageTransition}
             className="space-y-6"
         >
             <div className="space-y-2 text-center lg:text-left">

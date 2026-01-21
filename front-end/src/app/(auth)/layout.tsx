@@ -20,7 +20,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                         <div className="space-y-4">
                             <p className="text-sm uppercase tracking-[0.3em] text-emerald-100/70">ZeroHunger</p>
                             <h1 className="text-4xl font-semibold leading-tight drop-shadow-md">
-                                "Ending hunger starts with one shared act of generosity."
+                                &ldquo;Ending hunger starts with one shared act of generosity.&rdquo;
                             </h1>
                         </div>
                         <div className="space-y-2 text-emerald-50/80">
