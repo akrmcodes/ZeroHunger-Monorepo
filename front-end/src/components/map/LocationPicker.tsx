@@ -198,27 +198,45 @@ export function LocationPicker({
     const lngVal = longitude === null || longitude === undefined ? NaN : Number(longitude);
     const hasValidCoords = Number.isFinite(latVal) && Number.isFinite(lngVal);
 
-    // Use the geolocation hook for "Use My Location" functionality
-    const {
-        coordinates: userCoords,
-        isLoading: isLocating,
-        refresh: refreshLocation,
-    } = useGeolocation({ autoFetch: false });
-
     // Track if a location has been explicitly selected
     const [hasSelection, setHasSelection] = useState(hasValidCoords);
+
+    // Map center (only for initial view)
+    const defaultCenter: [number, number] = hasValidCoords 
+        ? [latVal, lngVal] 
+        : [DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude];
+    const [mapCenter, setMapCenter] = useState<[number, number]>(defaultCenter);
+
+    // Use the geolocation hook for "Use My Location" functionality
+    // When user clicks "Use My Location", we fetch fresh coordinates via onSuccess callback
+    const {
+        isLoading: isLocating,
+        refresh: refreshLocation,
+    } = useGeolocation({ 
+        autoFetch: false,
+        onSuccess: (freshCoords) => {
+            // This callback fires with FRESH coordinates after GPS fetch succeeds
+            // Use these immediately to avoid stale closure issues
+            if (!disabled) {
+                setHasSelection(true);
+                onLocationChange(freshCoords);
+                setMapCenter([freshCoords.latitude, freshCoords.longitude]);
+                
+                // Generate address text from fresh coordinates
+                const addressText = `Lat: ${freshCoords.latitude.toFixed(6)}, Long: ${freshCoords.longitude.toFixed(6)}`;
+                onAddressChange?.(addressText);
+            }
+        },
+    });
 
     // Current marker position
     const markerPosition = useMemo((): [number, number] => {
         if (hasValidCoords) {
             return [latVal, lngVal];
         }
-        // Default to Cairo center
+        // Default to default location
         return [DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude];
     }, [hasValidCoords, latVal, lngVal]);
-
-    // Map center (only for initial view)
-    const [mapCenter, setMapCenter] = useState<[number, number]>(markerPosition);
 
     // Handle location selection (click or drag)
     const handleLocationSelect = useCallback(
@@ -235,18 +253,12 @@ export function LocationPicker({
         [disabled, onLocationChange, onAddressChange]
     );
 
-    // Handle "Use My Location" button
+    // Handle "Use My Location" button - just trigger refresh
+    // The actual coordinate handling happens in the onSuccess callback above
     const handleUseMyLocation = useCallback(async () => {
         if (disabled) return;
-
         await refreshLocation();
-
-        // Small delay to ensure state is updated
-        setTimeout(() => {
-            handleLocationSelect(userCoords);
-            setMapCenter([userCoords.latitude, userCoords.longitude]);
-        }, 100);
-    }, [disabled, refreshLocation, userCoords, handleLocationSelect]);
+    }, [disabled, refreshLocation]);
 
     // Handle reset
     const handleReset = useCallback(() => {
