@@ -63,7 +63,7 @@ export function DashboardNavbar() {
                                             <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                                         ) : (
                                             <BreadcrumbLink asChild>
-                                                <Link href={crumb.href}>{crumb.label}</Link>
+                                                <Link href={crumb.href as any}>{crumb.label}</Link>
                                             </BreadcrumbLink>
                                         )}
                                     </BreadcrumbItem>

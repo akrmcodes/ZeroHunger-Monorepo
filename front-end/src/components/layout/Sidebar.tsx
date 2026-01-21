@@ -38,7 +38,7 @@ export function Sidebar() {
                     return (
                         <Link
                             key={href}
-                            href={href}
+                            href={href as any}
                             className={
                                 active
                                     ? "flex items-center gap-3 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white shadow"

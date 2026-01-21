@@ -46,7 +46,7 @@ export function MobileNav() {
                         return (
                             <Link
                                 key={href}
-                                href={href}
+                                href={href as any}
                                 onClick={() => setOpen(false)}
                                 className={
                                     active
