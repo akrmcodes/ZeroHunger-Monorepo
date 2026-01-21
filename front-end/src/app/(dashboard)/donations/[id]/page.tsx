@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, MapPin, Soup, ExternalLink, Loader2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ import { StatusBadge } from "@/components/donations/StatusBadge";
 import { ClaimButton, ReservedBadge } from "@/components/donations/claim";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DonationMapSkeleton } from "@/components/map/MapSkeleton";
 import { api } from "@/lib/api";
 import type { ApiError } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
@@ -23,6 +25,15 @@ import {
     isDonationAvailable,
 } from "@/types/donation";
 import { formatFoodType } from "@/lib/utils/formatters";
+
+// Dynamic import for map to avoid SSR issues with Leaflet
+const DonationMap = dynamic(
+    () => import("@/components/map/DonationMap").then((mod) => mod.DonationMap),
+    {
+        ssr: false,
+        loading: () => <DonationMapSkeleton height="200px" />,
+    }
+);
 
 // =============================================================================
 // VIEW TYPES
@@ -225,9 +236,14 @@ export default function DonationDetailPage() {
         const address = donation?.pickup_address;
 
         let url = "";
-        if (lat && lng && (lat !== 0 || lng !== 0)) {
+        // Check for valid coordinates (not null/undefined/0)
+        const hasValidCoords = lat != null && lng != null && 
+            Number.isFinite(lat) && Number.isFinite(lng) &&
+            !(lat === 0 && lng === 0);
+        
+        if (hasValidCoords) {
             url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-        } else if (address) {
+        } else if (address && address.trim()) {
             url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
         }
 
@@ -337,6 +353,27 @@ export default function DonationDetailPage() {
                                     <ExternalLink className="h-3 w-3 text-muted-foreground" />
                                 </div>
                             </div>
+                            
+                            {/* Location Map Preview */}
+                            {donation.latitude && donation.longitude && 
+                             !(donation.latitude === 0 && donation.longitude === 0) && (
+                                <div className="space-y-2 pt-2">
+                                    <p className="text-xs uppercase text-muted-foreground">
+                                        Pickup Location
+                                    </p>
+                                    <div className="overflow-hidden rounded-lg border border-border/70">
+                                        <DonationMap
+                                            donations={[donation]}
+                                            center={{ latitude: donation.latitude, longitude: donation.longitude }}
+                                            height="200px"
+                                            autoFitBounds={false}
+                                            showDistance={false}
+                                            zoom={15}
+                                            onDonationClick={handleNavigateToMap}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
