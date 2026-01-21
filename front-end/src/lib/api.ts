@@ -48,6 +48,7 @@ export interface Claim {
   donation_id:  number;
   volunteer_id: number;
   status: "active" | "picked_up" | "delivered" | "cancelled";
+  pickup_code?: string;
   picked_up_at:  string | null;
   delivered_at:  string | null;
   notes: string | null;
@@ -255,9 +256,12 @@ const auth = {
    */
   async register(payload: RegisterRequest): Promise<ApiResponse<AuthResponse>> {
     try {
+      console.log("📤 [API] Register payload:", JSON.stringify(payload, null, 2));
       const response = await apiClient.post<AuthResponse>("/register", payload);
+      console.log("📥 [API] Register response:", response.data);
       return normalizeResponse(response, response.data.message);
     } catch (error) {
+      console.error("❌ [API] Register error:", error);
       return handleError(error);
     }
   },
