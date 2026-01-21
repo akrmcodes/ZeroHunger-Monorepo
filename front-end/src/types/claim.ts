@@ -56,6 +56,7 @@ export interface Claim {
   donation_id: number;
   volunteer_id: number;
   status: ClaimStatus;
+  pickup_code?: string;
   picked_up_at: string | null;
   delivered_at: string | null;
   notes: string | null;
