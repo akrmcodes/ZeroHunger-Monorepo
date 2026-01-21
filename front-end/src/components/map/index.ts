@@ -29,5 +29,5 @@ export { LocationPicker } from "./LocationPicker";
 export { MapSkeleton, DonationMapSkeleton, LocationPickerSkeleton } from "./MapSkeleton";
 
 // Type exports
-export type { DonationMapProps, DonationMarker } from "./DonationMap";
+export type { DonationMapProps } from "./DonationMap";
 export type { LocationPickerProps } from "./LocationPicker";
