@@ -13,11 +13,12 @@ import { api } from "@/lib/api";
 import { getToken, removeToken, setToken } from "@/lib/utils/auth-storage";
 import type { LoginRequest, RegisterRequest, User } from "@/lib/api";
 
-interface AuthContextType {
+// ✅ 1. قمنا بتحديث الواجهة لتشمل isAuthenticated
+export interface AuthContextType {
     user: User | null;
     isLoading: boolean;
-    login: (data: LoginRequest) => Promise<void>;
-    register: (data: RegisterRequest) => Promise<void>;
+    isAuthenticated: boolean; // <--- هذا هو الحقل المفقود الذي سبب الخطأ
+login: (data: LoginRequest, remember?: boolean) => Promise<void>;    register: (data: RegisterRequest) => Promise<void>;
     logout: () => Promise<void>;
     updateUser: (user: User) => void;
 }
@@ -128,7 +129,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     return (
         <AuthContext.Provider
-            value={{ user, isLoading, login, register, logout, updateUser }}
+            value={{
+                user,
+                isLoading,
+                // ✅ 2. هنا نقوم بحساب القيمة التي يحتاجها AuthGuard
+                isAuthenticated: !!user,
+                login,
+                register,
+                logout,
+                updateUser
+            }}
         >
             {children}
         </AuthContext.Provider>
