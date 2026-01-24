@@ -42,7 +42,7 @@ import { MapSkeleton } from "@/components/map/MapSkeleton";
 // Leaflet requires `window` which doesn't exist on the server.
 // =============================================================================
 const LocationPicker = dynamic(
-    () => import("@/components/map/LocationPicker").then((mod) => mod.LocationPicker),
+    () => import("@/components/map/LocationPicker"),
     {
         ssr: false,
         loading: () => <MapSkeleton height="250px" showControls={false} />,

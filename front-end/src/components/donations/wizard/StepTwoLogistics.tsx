@@ -9,15 +9,15 @@ import { Button } from "@/components/ui/button";
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { DonationFormValues } from "@/lib/validators/donation";
-import { LocationPickerSkeleton } from "@/components/map/MapSkeleton";
+import { MapSkeleton as LocationPickerSkeleton } from "@/components/map/MapSkeleton"; 
 import type { GeoCoordinates } from "@/hooks/useGeolocation";
 
-// Dynamic import for LocationPicker to avoid SSR issues
+// ✅ التصحيح: إزالة .then ليعمل مع Default Export
 const LocationPicker = dynamic(
-    () => import("@/components/map/LocationPicker").then((mod) => mod.LocationPicker),
+    () => import("@/components/map/LocationPicker"), 
     {
         ssr: false,
-        loading: () => <LocationPickerSkeleton height="300px" />,
+        loading: () => <LocationPickerSkeleton height="280px" showControls={false} />,
     }
 );
 
@@ -70,20 +70,18 @@ export function StepTwoLogistics({ onBack, onNext }: StepTwoLogisticsProps) {
             {/* Location Picker Map */}
             <FormItem className="space-y-2">
                 <FormLabel>Pickup Location</FormLabel>
-                <LocationPicker
-                    latitude={latitude}
-                    longitude={longitude}
-                    onLocationChange={handleLocationChange}
-                    onAddressChange={handleAddressChange}
-                    height="280px"
-                    placeholder="Click on the map to set the pickup location"
-                />
+                <div className="rounded-xl border border-slate-200 overflow-hidden">
+                    <LocationPicker
+                        latitude={latitude}
+                        longitude={longitude}
+                        onLocationChange={handleLocationChange}
+                        onAddressChange={handleAddressChange}
+                        height="280px"
+                    />
+                </div>
                 {/* Show validation errors for coordinates */}
                 {form.formState.errors.latitude && (
-                    <p className="text-sm text-destructive">{form.formState.errors.latitude.message}</p>
-                )}
-                {form.formState.errors.longitude && (
-                    <p className="text-sm text-destructive">{form.formState.errors.longitude.message}</p>
+                    <p className="text-sm text-destructive">Please select a location on the map</p>
                 )}
             </FormItem>
 
@@ -96,7 +94,7 @@ export function StepTwoLogistics({ onBack, onNext }: StepTwoLogisticsProps) {
                         <FormControl>
                             <textarea
                                 rows={2}
-                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm outline-none transition focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
                                 placeholder="Add pickup address or describe the location (e.g., 'Blue building, 3rd floor')"
                                 {...field}
                             />
@@ -120,11 +118,11 @@ export function StepTwoLogistics({ onBack, onNext }: StepTwoLogisticsProps) {
                 )}
             />
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between pt-4">
                 <Button variant="ghost" type="button" onClick={onBack}>
                     Back
                 </Button>
-                <Button type="button" onClick={handleNext}>
+                <Button type="button" onClick={handleNext} className="bg-emerald-600 hover:bg-emerald-700">
                     Review / Next
                 </Button>
             </div>
