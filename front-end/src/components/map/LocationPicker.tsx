@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState, useEffect } from "react";
+// نستخدم الاستيراد الديناميكي للمكونات الداخلية لتقليل حجم الباقة الأولية
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import { MapPin, Navigation, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,21 +27,13 @@ const DEFAULT_ZOOM = 15;
 // =============================================================================
 
 export interface LocationPickerProps {
-    /** Current latitude value */
     latitude?: number | null;
-    /** Current longitude value */
     longitude?: number | null;
-    /** Called when location changes */
     onLocationChange: (coords: GeoCoordinates) => void;
-    /** Called when address text changes (optional) */
     onAddressChange?: (address: string) => void;
-    /** Map container height */
     height?: string;
-    /** Additional CSS classes */
     className?: string;
-    /** Placeholder text for instructions */
     placeholder?: string;
-    /** Disable user interaction */
     disabled?: boolean;
 }
 
@@ -48,9 +41,6 @@ export interface LocationPickerProps {
 // SUB-COMPONENTS
 // =============================================================================
 
-/**
- * ClickHandler - Listens for map clicks and updates location
- */
 interface ClickHandlerProps {
     onLocationSelect: (coords: GeoCoordinates) => void;
     disabled?: boolean;
@@ -69,26 +59,18 @@ function ClickHandler({ onLocationSelect, disabled }: ClickHandlerProps) {
     return null;
 }
 
-/**
- * MapCenterUpdater - Syncs map center with external state
- */
 interface MapCenterUpdaterProps {
     center: [number, number];
 }
 
 function MapCenterUpdater({ center }: MapCenterUpdaterProps) {
     const map = useMap();
-
     useEffect(() => {
         map.setView(center, map.getZoom(), { animate: true });
     }, [map, center]);
-
     return null;
 }
 
-/**
- * DraggableMarker - Pin that user can drag to set location
- */
 interface DraggableMarkerProps {
     position: [number, number];
     onPositionChange: (coords: GeoCoordinates) => void;
@@ -128,7 +110,7 @@ function DraggableMarker({
 function usePickerIcons() {
     const icons = useMemo(() => {
         if (typeof window === "undefined") {
-            return { markerIcon: null };
+            return { markerIcon: undefined };
         }
 
         // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -161,28 +143,6 @@ function usePickerIcons() {
 // MAIN COMPONENT
 // =============================================================================
 
-/**
- * LocationPicker - Interactive map for selecting a location
- * 
- * Features:
- * - Click to set location
- * - Drag marker to adjust
- * - "Use My Location" button
- * - Bidirectional state sync with parent form
- * - Coordinate display
- * 
- * @example
- * ```tsx
- * <LocationPicker
- *   latitude={form.watch("latitude")}
- *   longitude={form.watch("longitude")}
- *   onLocationChange={(coords) => {
- *     form.setValue("latitude", coords.latitude);
- *     form.setValue("longitude", coords.longitude);
- *   }}
- * />
- * ```
- */
 export function LocationPicker({
     latitude,
     longitude,
@@ -193,74 +153,63 @@ export function LocationPicker({
     placeholder = "Click on the map or drag the marker to set pickup location",
     disabled = false,
 }: LocationPickerProps) {
-    // Parse incoming values defensively (may arrive as string/null)
+    // ✅ FIX: State to track if we are on the client (browser)
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
+
     const latVal = latitude === null || latitude === undefined ? NaN : Number(latitude);
     const lngVal = longitude === null || longitude === undefined ? NaN : Number(longitude);
     const hasValidCoords = Number.isFinite(latVal) && Number.isFinite(lngVal);
 
-    // Track if a location has been explicitly selected
     const [hasSelection, setHasSelection] = useState(hasValidCoords);
 
-    // Map center (only for initial view)
-    const defaultCenter: [number, number] = hasValidCoords 
-        ? [latVal, lngVal] 
+    const defaultCenter: [number, number] = hasValidCoords
+        ? [latVal, lngVal]
         : [DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude];
     const [mapCenter, setMapCenter] = useState<[number, number]>(defaultCenter);
 
-    // Use the geolocation hook for "Use My Location" functionality
-    // When user clicks "Use My Location", we fetch fresh coordinates via onSuccess callback
     const {
         isLoading: isLocating,
         refresh: refreshLocation,
-    } = useGeolocation({ 
+    } = useGeolocation({
         autoFetch: false,
         onSuccess: (freshCoords) => {
-            // This callback fires with FRESH coordinates after GPS fetch succeeds
-            // Use these immediately to avoid stale closure issues
             if (!disabled) {
                 setHasSelection(true);
                 onLocationChange(freshCoords);
                 setMapCenter([freshCoords.latitude, freshCoords.longitude]);
-                
-                // Generate address text from fresh coordinates
                 const addressText = `Lat: ${freshCoords.latitude.toFixed(6)}, Long: ${freshCoords.longitude.toFixed(6)}`;
                 onAddressChange?.(addressText);
             }
         },
     });
 
-    // Current marker position
     const markerPosition = useMemo((): [number, number] => {
         if (hasValidCoords) {
             return [latVal, lngVal];
         }
-        // Default to default location
         return [DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude];
     }, [hasValidCoords, latVal, lngVal]);
 
-    // Handle location selection (click or drag)
     const handleLocationSelect = useCallback(
         (coords: GeoCoordinates) => {
             if (disabled) return;
-
             setHasSelection(true);
             onLocationChange(coords);
-
-            // Generate a simple address string from coordinates
             const addressText = `Lat: ${coords.latitude.toFixed(6)}, Long: ${coords.longitude.toFixed(6)}`;
             onAddressChange?.(addressText);
         },
         [disabled, onLocationChange, onAddressChange]
     );
 
-    // Handle "Use My Location" button - just trigger refresh
-    // The actual coordinate handling happens in the onSuccess callback above
     const handleUseMyLocation = useCallback(async () => {
         if (disabled) return;
         await refreshLocation();
     }, [disabled, refreshLocation]);
 
-    // Handle reset
     const handleReset = useCallback(() => {
         setHasSelection(false);
         onLocationChange({
@@ -270,16 +219,28 @@ export function LocationPicker({
         setMapCenter([DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude]);
     }, [onLocationChange]);
 
-    // Sync with external changes - use derived state pattern
-    // Note: This is intentional as we're syncing with external props
     const shouldHaveSelection = hasValidCoords;
     if (shouldHaveSelection !== hasSelection && shouldHaveSelection) {
         setHasSelection(true);
     }
 
+    // ✅ FIX: If not mounted (Server Side), return a Skeleton/Loading div
+    // This prevents "window is not defined" because MapContainer is never rendered on server
+    if (!isMounted) {
+        return (
+            <div 
+                className={cn("w-full bg-slate-100 animate-pulse rounded-lg border border-slate-200", className)} 
+                style={{ height }}
+            >
+                <div className="h-full w-full flex items-center justify-center text-slate-400">
+                    <MapPin className="h-8 w-8 opacity-20" />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className={cn("space-y-3", className)}>
-            {/* Controls */}
             <div className="flex items-center justify-between gap-2 flex-wrap">
                 <p className="text-sm text-muted-foreground">{placeholder}</p>
                 <div className="flex items-center gap-2">
@@ -310,7 +271,6 @@ export function LocationPicker({
                 </div>
             </div>
 
-            {/* Map */}
             <div
                 className={cn(
                     "relative rounded-lg overflow-hidden border",
@@ -325,17 +285,11 @@ export function LocationPicker({
                     className="z-0"
                 >
                     <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} />
-
-                    {/* Click handler */}
                     <ClickHandler
                         onLocationSelect={handleLocationSelect}
                         disabled={disabled}
                     />
-
-                    {/* Center updater for "Use My Location" */}
                     <MapCenterUpdater center={mapCenter} />
-
-                    {/* Draggable marker */}
                     {hasSelection && (
                         <DraggableMarker
                             position={markerPosition}
@@ -345,9 +299,8 @@ export function LocationPicker({
                     )}
                 </MapContainer>
 
-                {/* Crosshair overlay when no selection */}
                 {!hasSelection && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[400]">
                         <div className="flex flex-col items-center gap-2 text-muted-foreground">
                             <MapPin className="h-8 w-8 animate-bounce" />
                             <span className="text-xs bg-background/80 px-2 py-1 rounded">
@@ -358,7 +311,6 @@ export function LocationPicker({
                 )}
             </div>
 
-            {/* Coordinate display */}
             {hasSelection && hasValidCoords ? (
                 <div className="flex items-center gap-4 text-xs text-muted-foreground bg-muted/50 rounded-md px-3 py-2">
                     <span className="flex items-center gap-1">
@@ -378,21 +330,5 @@ export function LocationPicker({
     );
 }
 
-// =============================================================================
-// DYNAMIC IMPORT WRAPPER
-// =============================================================================
-
-/**
- * This file should be imported dynamically to avoid SSR issues:
- * 
- * ```tsx
- * import dynamic from 'next/dynamic';
- * 
- * const LocationPicker = dynamic(
- *   () => import('@/components/map/LocationPicker').then((mod) => mod.LocationPicker),
- *   { ssr: false, loading: () => <LocationPickerSkeleton /> }
- * );
- * ```
- */
-
+// ✅ FIX: Export Default as well for compatibility
 export default LocationPicker;
