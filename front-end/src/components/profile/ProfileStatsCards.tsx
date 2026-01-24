@@ -1,5 +1,8 @@
 "use client";
 
+// Fix Leaflet default marker icons for Next.js
+import "@/lib/leaflet-icon-fix";
+
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
@@ -244,6 +247,7 @@ function LocationCard({
                     {hasLocation ? (
                         <div className="relative h-40">
                             <MapContainer
+                                key={`${user.latitude}-${user.longitude}`}
                                 center={[Number(user.latitude), Number(user.longitude)]}
                                 zoom={13}
                                 scrollWheelZoom={false}
@@ -357,3 +361,4 @@ export function ProfileStatsCardsSkeleton() {
 }
 
 export default ProfileStatsCards;
+

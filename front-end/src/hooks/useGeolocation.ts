@@ -321,7 +321,8 @@ export function useGeolocation(
         navigator.geolocation.clearWatch(currentWatchId);
       }
     };
-  }, [autoFetch, isSupported, fetchPosition]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoFetch, isSupported]); // Intentionally exclude fetchPosition to prevent loop
 
   return {
     ...state,
@@ -366,9 +367,9 @@ export function calculateDistance(
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos(toRad(from.latitude)) *
-      Math.cos(toRad(to.latitude)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos(toRad(to.latitude)) *
+    Math.sin(dLon / 2) *
+    Math.sin(dLon / 2);
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;

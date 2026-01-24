@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -113,14 +113,17 @@ function LocationStatus({
     error,
     onRefresh,
     hasProfileLocation,
+    isMounted,
 }: {
     isDefault: boolean;
     isLoading: boolean;
     error: string | null;
     onRefresh: () => void;
     hasProfileLocation: boolean;
+    isMounted: boolean;
 }) {
-    if (isLoading) {
+    // Only show loading state after component is mounted to avoid hydration mismatch
+    if (isMounted && isLoading) {
         return (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -280,6 +283,12 @@ function DonationListView({
 export default function NearbyDonationsPage() {
     const router = useRouter();
     const { user } = useAuth();
+
+    // Track if component is mounted (for hydration-safe rendering)
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // View state
     const [viewMode, setViewMode] = useState<ViewMode>("map");
@@ -461,10 +470,12 @@ export default function NearbyDonationsPage() {
                 error={locationError}
                 onRefresh={refreshLocation}
                 hasProfileLocation={hasProfileLocation && !useGpsOverride}
+                isMounted={isMounted}
             />
 
-            {/* Prompt to register location if not set */}
-            {!hasProfileLocation && !isLocating && (
+
+            {/* Prompt to register location if not set - only after hydration */}
+            {isMounted && !hasProfileLocation && !isLocating && (
                 <Card className="bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
                     <CardContent className="p-4 flex items-center gap-4">
                         <MapPin className="h-8 w-8 text-blue-600 shrink-0" />
@@ -529,8 +540,8 @@ export default function NearbyDonationsPage() {
                                 <div className="flex items-center justify-between">
                                     <CardTitle className="text-base font-medium flex items-center gap-2">
                                         <MapIcon className="h-4 w-4" />
-                                        {isDonationsLoading
-                                            ? "Loading..."
+                                        {!isMounted || isDonationsLoading
+                                            ? "Loading nearby donations..."
                                             : `${sortedDonations.length} donation${sortedDonations.length !== 1 ? "s" : ""
                                             } within ${radius}km`}
                                     </CardTitle>
@@ -601,3 +612,5 @@ export default function NearbyDonationsPage() {
         </div>
     );
 }
+
+

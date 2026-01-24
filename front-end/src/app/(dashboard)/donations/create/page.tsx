@@ -58,8 +58,8 @@ export default function Page() {
                 quantity: data.quantity,
                 expires_at: data.expires_at,
                 pickup_address: data.pickup_address,
-                latitude: 0,
-                longitude: 0,
+                latitude: data.latitude,
+                longitude: data.longitude,
             });
             toast.success("Donation created successfully!");
             addNotification(

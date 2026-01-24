@@ -34,21 +34,8 @@ Route::prefix('v1')->group(function () {
         Route::put('/profile', [AuthController::class, 'updateProfile']);
         
         // Donation endpoints
-        Route::get('/donations', [DonationController::class, 'index']);
-        Route::get('/donations/{donation}', [DonationController::class, 'show']);
-        Route::post('/donations', [DonationController::class, 'store']);
-        Route::put('/donations/{donation}', [DonationController::class, 'update']);
-        Route::delete('/donations/{donation}', [DonationController::class, 'destroy']);
-        Route::post('/donations/{donation}/claim', [DonationController::class, 'claim']);
-        Route::get('/my-donations', [DonationController::class, 'myDonations']);
-        
-        // Claim endpoints
-        Route::get('/claims', [ClaimController::class, 'index']);
-        Route::post('/claims/{claim}/pickup', [ClaimController::class, 'markPickedUp']);
-        Route::post('/claims/{claim}/deliver', [ClaimController::class, 'markDelivered']);
-        Route::delete('/claims/{claim}', [ClaimController::class, 'cancel']);
-        
-        // GeoLocation endpoint
+        // IMPORTANT: /donations/nearby must be BEFORE /donations/{donation}
+        // Otherwise Laravel matches 'nearby' as a {donation} parameter
         Route::get('/donations/nearby', function (GeoService $geoService, Request $request) {
             $latitude = $request->query('latitude');
             $longitude = $request->query('longitude');
@@ -68,6 +55,20 @@ Route::prefix('v1')->group(function () {
 
             return DonationResource::collection($donations);
         });
+        
+        Route::get('/donations', [DonationController::class, 'index']);
+        Route::get('/donations/{donation}', [DonationController::class, 'show']);
+        Route::post('/donations', [DonationController::class, 'store']);
+        Route::put('/donations/{donation}', [DonationController::class, 'update']);
+        Route::delete('/donations/{donation}', [DonationController::class, 'destroy']);
+        Route::post('/donations/{donation}/claim', [DonationController::class, 'claim']);
+        Route::get('/my-donations', [DonationController::class, 'myDonations']);
+        
+        // Claim endpoints
+        Route::get('/claims', [ClaimController::class, 'index']);
+        Route::post('/claims/{claim}/pickup', [ClaimController::class, 'markPickedUp']);
+        Route::post('/claims/{claim}/deliver', [ClaimController::class, 'markDelivered']);
+        Route::delete('/claims/{claim}', [ClaimController::class, 'cancel']);
         
         // Notification endpoints
         Route::get('/notifications', function (Request $request) {
