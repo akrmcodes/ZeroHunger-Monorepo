@@ -1,11 +1,7 @@
 "use client";
 
-// Fix Leaflet default marker icons for Next.js
-import "@/lib/leaflet-icon-fix";
-
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import dynamic from "next/dynamic";
 import {
     Mail,
     Phone,
@@ -30,20 +26,8 @@ import {
     getSimulatedStats,
     getStatsForDisplay,
 } from "@/lib/utils/profile-simulation";
+import { ProfileLocationMap } from "./ProfileLocationMap";
 
-// Dynamic import for the map (SSR disabled)
-const MapContainer = dynamic(
-    () => import("react-leaflet").then((mod) => mod.MapContainer),
-    { ssr: false }
-);
-const TileLayer = dynamic(
-    () => import("react-leaflet").then((mod) => mod.TileLayer),
-    { ssr: false }
-);
-const Marker = dynamic(
-    () => import("react-leaflet").then((mod) => mod.Marker),
-    { ssr: false }
-);
 
 // =============================================================================
 // Props
@@ -244,40 +228,16 @@ function LocationCard({
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                    {hasLocation ? (
-                        <div className="relative h-40">
-                            <MapContainer
-                                key={`${user.latitude}-${user.longitude}`}
-                                center={[Number(user.latitude), Number(user.longitude)]}
-                                zoom={13}
-                                scrollWheelZoom={false}
-                                dragging={false}
-                                zoomControl={false}
-                                attributionControl={false}
-                                className="h-full w-full"
-                            >
-                                <TileLayer
-                                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                />
-                                <Marker position={[Number(user.latitude), Number(user.longitude)]} />
-                            </MapContainer>
+                    <div className="relative h-40">
+                        <ProfileLocationMap user={user} className="h-full" />
+                        {hasLocation && (
                             <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-white/90 to-transparent p-3">
                                 <p className="text-xs font-medium text-slate-600">
                                     {Number(user.latitude).toFixed(4)}, {Number(user.longitude).toFixed(4)}
                                 </p>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="flex h-40 flex-col items-center justify-center bg-slate-50 text-center p-4">
-                            <MapPin className="mb-2 size-8 text-slate-300" />
-                            <p className="text-sm font-medium text-slate-500">
-                                No location set
-                            </p>
-                            <p className="text-xs text-slate-400">
-                                Edit your profile to add a location
-                            </p>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </CardContent>
             </Card>
         </motion.div>

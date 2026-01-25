@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-
+import { applyLeafletIconFix } from "@/lib/leaflet-icon-fix";
 import type { GeoCoordinates } from "@/hooks/useGeolocation";
 import { calculateDistance, formatDistance } from "@/hooks/useGeolocation";
 import { cn } from "@/lib/utils";
 import type { Donation } from "@/types/donation";
+
+// Apply the icon fix - safe because this file is only loaded via dynamic import
+applyLeafletIconFix();
 
 // =============================================================================
 // CONSTANTS

@@ -7,6 +7,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useGeolocation, DEFAULT_LOCATION } from "@/hooks/useGeolocation";
 import type { GeoCoordinates } from "@/hooks/useGeolocation";
+import { applyLeafletIconFix } from "@/lib/leaflet-icon-fix";
+
+// Apply the icon fix - safe because this file is only loaded via dynamic import
+applyLeafletIconFix();
 
 // =============================================================================
 // CONSTANTS
@@ -202,8 +206,8 @@ export function LocationPicker({
     const [hasSelection, setHasSelection] = useState(hasValidCoords);
 
     // Map center (only for initial view)
-    const defaultCenter: [number, number] = hasValidCoords 
-        ? [latVal, lngVal] 
+    const defaultCenter: [number, number] = hasValidCoords
+        ? [latVal, lngVal]
         : [DEFAULT_LOCATION.latitude, DEFAULT_LOCATION.longitude];
     const [mapCenter, setMapCenter] = useState<[number, number]>(defaultCenter);
 
@@ -212,7 +216,7 @@ export function LocationPicker({
     const {
         isLoading: isLocating,
         refresh: refreshLocation,
-    } = useGeolocation({ 
+    } = useGeolocation({
         autoFetch: false,
         onSuccess: (freshCoords) => {
             // This callback fires with FRESH coordinates after GPS fetch succeeds
@@ -221,7 +225,7 @@ export function LocationPicker({
                 setHasSelection(true);
                 onLocationChange(freshCoords);
                 setMapCenter([freshCoords.latitude, freshCoords.longitude]);
-                
+
                 // Generate address text from fresh coordinates
                 const addressText = `Lat: ${freshCoords.latitude.toFixed(6)}, Long: ${freshCoords.longitude.toFixed(6)}`;
                 onAddressChange?.(addressText);

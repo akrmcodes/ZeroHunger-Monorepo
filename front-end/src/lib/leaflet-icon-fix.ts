@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Leaflet Icon Fix for Next.js / Webpack
  * 
@@ -11,31 +9,58 @@
  *
  * Solution: Manually configure the default icon using CDN paths.
  * 
- * Usage: Import this file in any component that uses Leaflet Markers
+ * IMPORTANT: This uses lazy initialization to prevent SSR issues.
+ * Call `applyLeafletIconFix()` from within a dynamically imported component.
+ * 
+ * @example
  * ```tsx
- * import "@/lib/leaflet-icon-fix";
+ * // In a component that's dynamically imported with ssr: false
+ * import { applyLeafletIconFix } from "@/lib/leaflet-icon-fix";
+ * applyLeafletIconFix();
  * ```
  */
-
-import L from "leaflet";
 
 // Use CDN URLs for the marker icons (reliable and always available)
 const MARKER_ICON_URL = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png";
 const MARKER_ICON_2X_URL = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png";
 const MARKER_SHADOW_URL = "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png";
 
-// Fix the default icon - delete the broken _getIconUrl method
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+// Singleton flag to prevent multiple initializations
+let isFixed = false;
 
-L.Icon.Default.mergeOptions({
-    iconUrl: MARKER_ICON_URL,
-    iconRetinaUrl: MARKER_ICON_2X_URL,
-    shadowUrl: MARKER_SHADOW_URL,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
-});
+/**
+ * Apply the Leaflet icon fix. This function is safe to call multiple times
+ * and will only execute once. It also has a guard for SSR environments.
+ * 
+ * MUST be called from within a dynamically imported component with ssr: false
+ * to guarantee it only runs in the browser.
+ */
+export function applyLeafletIconFix(): void {
+    // Guard: Skip if already fixed or running on server
+    if (isFixed || typeof window === "undefined") {
+        return;
+    }
 
-export { };
+    // Dynamic require to avoid module-level evaluation
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const L = require("leaflet");
+
+    // Fix the default icon - delete the broken _getIconUrl method
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+
+    L.Icon.Default.mergeOptions({
+        iconUrl: MARKER_ICON_URL,
+        iconRetinaUrl: MARKER_ICON_2X_URL,
+        shadowUrl: MARKER_SHADOW_URL,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41],
+    });
+
+    isFixed = true;
+}
+
+// For backwards compatibility - but prefer applyLeafletIconFix()
+export default applyLeafletIconFix;
